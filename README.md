@@ -1,192 +1,203 @@
 <div align="center">
 
-<img src="docs/media/icon.png" width="112" alt="Ícone da Dynamic Island" />
-
-# Dynamic Island para Windows
-
-**A ilha dinâmica do iPhone, no topo da tela do seu PC: música, foco, tarefas e um assistente, a um olhar de distância.**
-
-[![Release](https://img.shields.io/github/v/release/CaasiDantas/dynamic-island?style=flat-square&color=7c83ff&label=vers%C3%A3o)](https://github.com/CaasiDantas/dynamic-island/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/CaasiDantas/dynamic-island/total?style=flat-square&color=2f6bff&label=downloads)](https://github.com/CaasiDantas/dynamic-island/releases)
-![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0a0a0c?style=flat-square&logo=windows11&logoColor=white)
-![Tauri 2](https://img.shields.io/badge/Tauri-2-24c8db?style=flat-square&logo=tauri&logoColor=white)
-![Rust](https://img.shields.io/badge/Rust-WinRT%20%2B%20WASAPI-b7410e?style=flat-square&logo=rust&logoColor=white)
-![React 19](https://img.shields.io/badge/React-19-149eca?style=flat-square&logo=react&logoColor=white)
-[![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-3fb950?style=flat-square)](LICENSE)
-
-[**Baixar para Windows**](https://github.com/CaasiDantas/dynamic-island/releases/latest) · [Recursos](#recursos) · [Como funciona](#como-funciona) · [Desenvolvimento](#desenvolvimento)
+<img src="docs/media/hero.png" width="100%" alt="Dynamic Island para Windows: a ilha aberta no topo da tela tocando música" />
 
 <br />
+<br />
 
-<img src="docs/media/hero.gif" width="860" alt="A ilha em repouso, abrindo com o mouse e mostrando a música com letra sincronizada" />
+[![Versão](https://img.shields.io/github/v/release/CaasiDantas/dynamic-island?style=flat-square&label=vers%C3%A3o&color=5b5bd6)](https://github.com/CaasiDantas/dynamic-island/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/CaasiDantas/dynamic-island/total?style=flat-square&label=downloads&color=5b5bd6)](https://github.com/CaasiDantas/dynamic-island/releases)
+[![Plataforma](https://img.shields.io/badge/plataforma-Windows%2010%20%7C%2011-5b5bd6?style=flat-square)](#instalação)
+[![Licença](https://img.shields.io/github/license/CaasiDantas/dynamic-island?style=flat-square&label=licen%C3%A7a&color=5b5bd6)](LICENSE)
+
+**[Baixar para Windows](https://github.com/CaasiDantas/dynamic-island/releases/latest)** &nbsp;·&nbsp;
+[Novidades](CHANGELOG.md) &nbsp;·&nbsp;
+[Reportar um problema](https://github.com/CaasiDantas/dynamic-island/issues/new/choose)
 
 </div>
 
 <br />
 
-## Por quê
+## Visão geral
 
-O topo da tela é o lugar mais nobre e mais desperdiçado do Windows. A Dynamic Island transforma esse espaço numa cápsula viva: ela fica quase invisível enquanto você trabalha, mostra só o que importa no momento (a música que está tocando, o tempo de foco, um lembrete) e se abre num clique quando você precisa de mais.
+Dynamic Island para Windows é uma cápsula discreta no centro do topo da tela. Ela fica quase invisível enquanto você trabalha, mostra só o que importa no momento (a música tocando, o tempo de foco, uma notificação) e se abre quando você passa o mouse ou clica.
 
-Sem conta, sem nuvem, sem anúncios. Roda nativa, a 60 fps, e fica em ~0% de CPU quando parada.
+Tudo roda no seu computador. Não há conta, nuvem, telemetria nem anúncios.
+
+<p align="center">
+  <img src="docs/media/demo.gif" width="100%" alt="A ilha em repouso abrindo com o mouse e mostrando a música com letra sincronizada" />
+</p>
 
 <br />
 
 ## Recursos
 
 <table>
-<tr>
-<td width="50%" valign="top">
-
-### 🎵 Música, como no iPhone
-Capa do álbum, barras que **seguem o som de verdade** (análise de frequência do áudio do PC, não uma animação em loop), controles, barra de progresso com seek, **volume do Windows** e **letra sincronizada** no Spotify. Funciona com Spotify, YouTube no navegador e qualquer player que apareça no controle de mídia do Windows.
-
-</td>
-<td width="50%" valign="top">
-
-<img src="docs/media/compact.png" alt="Ilha fechada com capa, hora e visualizador" />
-<br /><br />
-<img src="docs/media/music.png" alt="Página de música aberta com controles e volume" />
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-<img src="docs/media/board.gif" alt="Quadro de tarefas com cartões sendo arrastados entre colunas" />
-
-</td>
-<td width="50%" valign="top">
-
-### ✅ Tarefas e pastas com quadro
-Lista do dia com lembretes que a ilha avisa na hora certa, calendário e histórico. Para projetos, crie **pastas** (ex.: *Cadastrar empresas*) que abrem um **quadro em colunas**: arraste os cartões de *A fazer* para *Feito*, renomeie e crie colunas do seu jeito.
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### ✦ Claude no topo da tela
-Pergunte qualquer coisa ou aponte uma pasta de código e pergunte sobre ela. Usa o **Claude Code** instalado no seu PC (sem chave de API), em modo somente leitura, com a resposta chegando em tempo real.
-
-</td>
-<td width="50%" valign="top">
-
-<img src="docs/media/claude.gif" alt="Conversa com o Claude dentro da ilha" />
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-<img src="docs/media/alerts.gif" alt="Avisos do WhatsApp, fone conectado e volume" />
-
-</td>
-<td width="50%" valign="top">
-
-### 🔔 Avisos que não atrapalham
-Notificações do WhatsApp e de outros apps que você escolher, fone conectado, carregador, Caps Lock e volume aparecem como pílulas que crescem da ilha e somem sozinhas. Clique para abrir o app de origem.
-
-</td>
-</tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-music.png" alt="Página de música" />
+      <h3>Música</h3>
+      Capa, controles, progresso com avanço por clique e volume do Windows. Funciona com Spotify, navegadores e qualquer player que use o controle de mídia do sistema.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-lyrics.png" alt="Letra sincronizada" />
+      <h3>Letra sincronizada</h3>
+      A letra acompanha a música linha a linha, com destaque na frase atual. Clique numa linha para pular até ela.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-compact.png" alt="Ilha fechada com música" />
+      <h3>Atividade ao vivo</h3>
+      Fechada, a ilha mostra a capa, a hora e um visualizador que reage ao áudio real do PC, calculado por análise de frequência.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-alert.png" alt="Aviso de mensagem" />
+      <h3>Avisos</h3>
+      Notificações dos apps que você escolher, fone conectado, carregador, volume e Caps Lock aparecem na ilha e somem sozinhos.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-board.png" alt="Quadro de tarefas em colunas" />
+      <h3>Tarefas e quadros</h3>
+      Lista do dia com lembretes e calendário. Para projetos, crie pastas que abrem um quadro em colunas e arraste os cartões entre elas.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-pomodoro.png" alt="Pomodoro" />
+      <h3>Foco</h3>
+      Pomodoro com rodadas, pausa longa e a hora prevista de término. Durante o foco, a ilha fechada vira um cronômetro.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-claude.png" alt="Assistente Claude" />
+      <h3>Assistente</h3>
+      Converse com o Claude ou aponte uma pasta de código e pergunte sobre ela. Usa o Claude Code instalado no PC, em modo somente leitura.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-shortcuts.png" alt="Atalhos" />
+      <h3>Atalhos</h3>
+      Abra sites e aplicativos, inclusive os da Microsoft Store, com o ícone real de cada um.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-hardware.png" alt="Hardware" />
+      <h3>Hardware</h3>
+      CPU, GPU, memória, disco e rede em tempo real, com indicador de câmera e microfone em uso.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-settings.png" alt="Ajustes" />
+      <h3>Personalização</h3>
+      Tema claro ou escuro, qualquer cor de destaque com contraste garantido, formato da ilha, ordem das páginas e atalhos de teclado.
+    </td>
+  </tr>
 </table>
-
-### E mais
-
-| | |
-|---|---|
-| <img src="docs/media/pomodoro.png" alt="Pomodoro" /> | **Pomodoro** com rodadas, pausa longa e a hora em que o foco termina. A ilha fechada vira um cronômetro. |
-| <img src="docs/media/shortcuts.png" alt="Atalhos" /> | **Atalhos** de sites e de **aplicativos** (inclusive os da Microsoft Store), com o ícone real de cada um. |
-| <img src="docs/media/hardware.png" alt="Hardware" /> | **Hardware** ao vivo: CPU, GPU, RAM, disco e rede. Pontinhos verde/laranja quando a câmera ou o microfone estão em uso. |
-| <img src="docs/media/palette.png" alt="Paleta de comandos" /> | **Paleta de comandos** (`Ctrl+K` dentro da ilha ou `Ctrl+Alt+Espaço` de qualquer lugar): páginas, ações, atalhos e controles de música. |
-| <img src="docs/media/settings.png" alt="Ajustes" /> | **Ajustes completos:** tema por qualquer cor (tokens OKLCH com contraste WCAG), claro/escuro, formato da ilha, ordem das abas, atalhos de teclado e notificações. |
 
 <br />
 
 ## Instalação
 
-1. Baixe o instalador `DynamicIsland_x.y.z_x64-setup.exe` na [última versão](https://github.com/CaasiDantas/dynamic-island/releases/latest).
-2. Execute. Ele instala só para o seu usuário (não pede administrador).
-3. A ilha aparece no topo da tela e passa a **abrir junto com o Windows**. Dá para desligar em *Ajustes → Geral* ou no ícone da bandeja.
+1. Baixe `DynamicIsland_x.y.z_x64-setup.exe` na [versão mais recente](https://github.com/CaasiDantas/dynamic-island/releases/latest).
+2. Execute o instalador. A instalação é só para o seu usuário e não pede permissão de administrador.
+3. A ilha aparece no topo da tela e passa a iniciar com o Windows. Para desligar, use *Ajustes → Geral* ou o ícone na bandeja.
 
-**Atualizações:** quando sai uma versão nova, a ilha avisa. Um clique baixa, instala e reabre, sem precisar entrar aqui de novo.
+**Atualizações.** Quando sai uma versão nova, a ilha avisa. Um clique baixa, instala e reabre o app. Os pacotes são assinados, e o app recusa qualquer atualização com assinatura diferente.
+
+| Requisito | |
+|---|---|
+| Sistema | Windows 10 ou 11, 64 bits |
+| Runtime | Microsoft Edge WebView2 (já incluído no Windows 11) |
+| Assistente (opcional) | [Claude Code](https://docs.anthropic.com/claude-code) instalado e conectado |
 
 > [!NOTE]
-> O Windows SmartScreen pode avisar na primeira execução porque o instalador ainda não tem certificado de assinatura de código. Clique em *Mais informações → Executar assim mesmo*. As atualizações são assinadas com a chave do projeto e o app recusa qualquer pacote com assinatura diferente.
+> O instalador ainda não tem certificado de assinatura de código, então o SmartScreen pode exibir um aviso na primeira execução. Escolha *Mais informações → Executar assim mesmo*.
 
 <br />
 
 ## Atalhos de teclado
 
+<table>
+  <tr>
+    <td width="50%" valign="top">
+
 | Atalho | Ação |
 |---|---|
-| `Ctrl` `Alt` `Espaço` | Abre a paleta de comandos de qualquer lugar (configurável) |
-| `Ctrl` `K` | Paleta de comandos com a ilha aberta |
-| `Ctrl` `1`…`9` | Vai direto para uma página |
-| `←` `→` / roda do mouse nas abas | Página anterior / próxima |
-| `Ctrl` `,` | Ajustes |
-| `Esc` | Fecha o painel atual |
+| <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>Espaço</kbd> | Paleta de comandos, de qualquer lugar |
+| <kbd>Ctrl</kbd> <kbd>K</kbd> | Paleta de comandos com a ilha aberta |
+| <kbd>Ctrl</kbd> <kbd>1</kbd> … <kbd>9</kbd> | Ir para uma página |
+| <kbd>←</kbd> <kbd>→</kbd> | Página anterior ou seguinte |
+| <kbd>Ctrl</kbd> <kbd>,</kbd> | Ajustes |
+| <kbd>Esc</kbd> | Fechar o painel atual |
+
+O atalho global pode ser trocado em *Ajustes → Teclado*.
+
+</td>
+    <td width="50%" valign="top">
+      <img src="docs/media/feature-palette.png" alt="Paleta de comandos" />
+    </td>
+  </tr>
+</table>
 
 <br />
 
-## Como funciona
+## Arquitetura
+
+O núcleo é escrito em Rust sobre o [Tauri 2](https://tauri.app). Cada integração com o Windows roda numa thread própria e só envia eventos para a interface quando algo muda. A interface é feita em React 19 com CSS puro.
 
 ```mermaid
 flowchart LR
     subgraph Windows
-        SMTC["Controle de mídia<br/>(SMTC / WinRT)"]
-        WASAPI["Saída de áudio<br/>(WASAPI loopback)"]
-        NOTIF["Central de notificações"]
-        SYS["Energia · volume · Caps Lock<br/>câmera/microfone · hardware"]
-        SHELL["Shell<br/>(apps e ícones)"]
+        SMTC[Controle de mídia]
+        WASAPI[Saída de áudio]
+        NOTIF[Notificações]
+        SYS[Energia, volume e dispositivos]
+        SHELL[Shell]
     end
-
-    subgraph Rust["Núcleo em Rust (Tauri 2)"]
+    subgraph Núcleo em Rust
         MEDIA[media.rs]
-        SPEC["spectrum.rs<br/>FFT 1024 → 5 faixas"]
+        SPEC[spectrum.rs]
         NOTIFY[notify.rs]
         SYSTEM[system.rs · monitor.rs]
         APPS[apps.rs]
-        HOVER["hover/janela<br/>(lib.rs)"]
     end
-
-    subgraph UI["Interface (React 19 + CSS)"]
-        ISLAND["Ilha: repouso → fechada → aberta"]
-    end
-
+    UI[Interface React]
     SMTC --> MEDIA
     WASAPI --> SPEC
     NOTIF --> NOTIFY
     SYS --> SYSTEM
     SHELL --> APPS
-    MEDIA & SPEC & NOTIFY & SYSTEM & APPS -- eventos --> ISLAND
-    HOVER -- mouse --> ISLAND
-    ISLAND -- comandos --> MEDIA & APPS
+    MEDIA & SPEC & NOTIFY & SYSTEM & APPS -- eventos --> UI
+    UI -- comandos --> MEDIA & SYSTEM & APPS
 ```
 
-- **Nativo onde importa.** Cada integração do Windows vive numa thread Rust própria, dona dos seus objetos COM/WinRT, e só avisa a interface quando algo muda. Sem polling no JavaScript.
-- **Visualizador de verdade.** O áudio que sai do PC é capturado em loopback, passa por janela de Hann e FFT de 1024 pontos e vira 5 faixas (grave → agudo) com ganho automático. A captura só liga com música tocando e barras na tela.
-- **60 fps como requisito.** Animações só de `transform`/`opacity` (no compositor), nada de blur animado, nenhuma chamada ao Rust por quadro. As barras recebem ~30 valores/s e o CSS interpola o resto.
-- **Janela que não atrapalha.** Fora da cápsula, o mouse atravessa a janela. A área de clique acompanha o tamanho da ilha, e a ilha em repouso cobre só alguns pixels.
+| Área | Como funciona |
+|---|---|
+| Música | Sessões de mídia do Windows (SMTC) via WinRT |
+| Visualizador | Captura do áudio em loopback (WASAPI), FFT de 1024 pontos e 5 faixas de frequência com ganho automático. Só fica ativo com música tocando e a ilha visível. |
+| Janela | Janela transparente sempre no topo. Fora da cápsula, os cliques passam para o que está atrás. |
+| Desempenho | Animações apenas em `transform` e `opacity`, sem chamadas ao núcleo a cada quadro |
+| Atualizações | `tauri-plugin-updater` com pacotes assinados publicados nas Releases |
 
 <br />
 
 ## Privacidade
 
-Tudo fica no seu PC (`localStorage` do app). Os únicos serviços externos são:
+Os dados ficam no armazenamento local do app. Os únicos serviços externos consultados são:
 
-| Serviço | Para quê | O que recebe |
+| Serviço | Uso | Dados enviados |
 |---|---|---|
 | [LRCLIB](https://lrclib.net) | Letras sincronizadas | Título, artista e duração da música |
-| [wttr.in](https://wttr.in) | Clima | A cidade (ou a localização aproximada pelo IP) |
-| GitHub Releases | Verificar atualização | Uma consulta ao `latest.json` |
-| Claude Code (local) | Assistente | Só o que você pergunta, pela sua conta do Claude |
+| [wttr.in](https://wttr.in) | Clima | Cidade configurada ou localização aproximada pelo IP |
+| GitHub Releases | Verificação de atualização | Nenhum dado pessoal |
+| Claude Code | Assistente | Apenas o que você pergunta, pela sua conta |
 
 <br />
 
 ## Desenvolvimento
 
-**Requisitos:** Windows 10/11, [Node.js 20+](https://nodejs.org), [Rust](https://rustup.rs) (stable) e o [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (já vem no Windows 11).
+Requisitos: [Node.js 20+](https://nodejs.org), [Rust](https://rustup.rs) estável e as [dependências do Tauri para Windows](https://tauri.app/start/prerequisites/).
 
 ```bash
 git clone https://github.com/CaasiDantas/dynamic-island.git
@@ -195,52 +206,54 @@ npm install
 npm run tauri dev
 ```
 
-| Comando | O que faz |
+| Comando | Descrição |
 |---|---|
-| `npm run tauri dev` | App com recarga ao vivo (interface e Rust) |
-| `npm run dev` + `?demo=1` | Só a interface no navegador, com dados de demonstração |
-| `npm run tauri build` | Gera o instalador NSIS em `src-tauri/target/release/bundle/nsis/` |
-| `npm run release` | Build assinado + Release no GitHub com `latest.json` (atualização automática) |
+| `npm run tauri dev` | App com recarga ao vivo da interface e do núcleo |
+| `npm run dev` | Só a interface no navegador; use `?demo=1` para dados de demonstração |
+| `npm run tauri build` | Instalador NSIS em `src-tauri/target/release/bundle/nsis/` |
+| `npm run release` | Build assinado e publicação da Release com o manifesto de atualização |
 
 <details>
-<summary><b>Estrutura do projeto</b></summary>
+<summary><strong>Estrutura do projeto</strong></summary>
 
 ```
 src/
-├─ island/            Cápsula, estados (repouso/fechada/aberta), abas e ajustes
-├─ features/
-│  ├─ media/          Música, visualizador, volume e letra
-│  ├─ todo/           Tarefas, lembretes, calendário e quadros
-│  ├─ shortcuts/      Atalhos de sites e aplicativos
-│  ├─ claude/         Assistente (Claude Code)
-│  ├─ pomodoro/  weather/  monitor/  notify/  pills/  palette/  update/
-├─ lib/               Tema (OKLCH), layout, atalhos de teclado
-└─ styles/            CSS por área, só com tokens do tema
+├─ island/          Cápsula, estados, páginas e ajustes
+├─ features/        Música, tarefas, atalhos, assistente, foco, clima,
+│                   hardware, notificações, paleta e atualização
+├─ lib/             Tema, layout e teclado
+└─ styles/          Estilos por área, baseados em tokens do tema
 src-tauri/src/
-├─ lib.rs             Janela, hover e área de clique
-├─ media.rs           SMTC (WinRT)
-├─ spectrum.rs        Loopback WASAPI + FFT
-├─ apps.rs            Apps do Menu Iniciar, ícones e abertura
-├─ notify.rs          Notificações do Windows
-├─ system.rs          Energia, volume, áudio, Caps Lock
-├─ monitor.rs         CPU, GPU, RAM, disco, rede, câmera/microfone
-├─ claude.rs          Claude Code em modo headless
-├─ hotkey.rs  tray.rs
+├─ lib.rs           Janela, hover e área de clique
+├─ media.rs         Sessões de mídia (SMTC)
+├─ spectrum.rs      Captura de áudio e FFT
+├─ apps.rs          Aplicativos do Menu Iniciar e ícones
+├─ notify.rs        Notificações do Windows
+├─ system.rs        Energia, volume e Caps Lock
+├─ monitor.rs       Hardware, câmera e microfone
+├─ claude.rs        Integração com o Claude Code
+└─ hotkey.rs, tray.rs
 ```
 
 </details>
 
 <details>
-<summary><b>Publicando uma versão</b></summary>
+<summary><strong>Publicando uma versão</strong></summary>
 
-1. Suba a versão em `package.json`, `src-tauri/tauri.conf.json` e `src-tauri/Cargo.toml`.
-2. Escreva as notas em `CHANGELOG.md`, numa seção `## x.y.z`.
-3. Rode `npm run release`. O script compila, assina com a chave em `~/.tauri/dynamic-island.key`, cria a Release com o instalador e o `latest.json` e, a partir daí, quem tem o app recebe o aviso.
+1. Atualize a versão em `package.json`, `src-tauri/tauri.conf.json` e `src-tauri/Cargo.toml`.
+2. Descreva as mudanças em `CHANGELOG.md`, numa seção `## x.y.z`.
+3. Execute `npm run release`. O script compila, assina, cria a Release e publica o `latest.json` que o app consulta.
 
 </details>
 
 <br />
 
+## Contribuindo
+
+Relatos de problemas e sugestões são bem-vindos em [Issues](https://github.com/CaasiDantas/dynamic-island/issues). Antes de abrir um pull request, leia o [guia de contribuição](CONTRIBUTING.md). Para falhas de segurança, siga a [política de segurança](SECURITY.md).
+
 ## Licença
 
-[MIT](LICENSE) © Isaac Dantas
+Distribuído sob a [licença MIT](LICENSE).
+
+<sub>Dynamic Island é um nome usado pela Apple Inc. Este projeto é independente e não tem relação com a Apple.</sub>

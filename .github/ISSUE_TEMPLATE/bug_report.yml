@@ -1,0 +1,43 @@
+name: Relatar um problema
+description: Algo não funciona como deveria.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu
+      description: Descreva o problema e o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abra a página de música
+        2. Clique em …
+        3. Veja que …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versão do app
+      description: Em Ajustes → Geral.
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Windows
+      options:
+        - Windows 11
+        - Windows 10
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Informações adicionais
+      description: Imagens, vídeos ou qualquer detalhe que ajude.
