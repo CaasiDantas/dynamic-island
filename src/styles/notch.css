@@ -1,0 +1,770 @@
+/* ═════════ Expandido ═════════
+   Cabeçalho: abas à esquerda; data, hora, busca e ajustes à direita.
+   Trocar de página anima só opacidade e deslocamento (compositor). */
+
+.xp {
+  position: relative;
+  height: 100%;
+}
+
+.xp-head {
+  position: absolute;
+  top: 0.625rem;
+  left: 0.75rem;
+  right: 0.625rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* ───────── Abas ───────── */
+
+.tabs {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.tabs-strip {
+  --tab: 1.75rem;
+  --gap: 0.125rem;
+  position: relative;
+  display: flex;
+  gap: var(--gap);
+  max-width: calc(7 * (var(--tab) + var(--gap)) + 0.25rem);
+  padding: 0.125rem;
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.tabs-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mais abas que espaço: as pontas somem num degradê, indicando que rola. */
+.tabs-strip[data-overflow="true"] {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 0.75rem, #000 calc(100% - 0.75rem), transparent);
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: var(--tab);
+  height: 1.375rem;
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--radius) - 0.125rem);
+  font-size: 0.875rem;
+  color: var(--fg-3);
+  transition: color 160ms ease;
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--accent-text);
+}
+
+/* Indicador: desliza por transform; a posição vem do índice (--i), sem medir nada. */
+.tabs-indicator {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: var(--tab);
+  height: 1.375rem;
+  border-radius: calc(var(--radius) - 0.125rem);
+  background: var(--surface-3);
+  translate: calc(var(--i) * (var(--tab) + var(--gap))) 0;
+  transition: translate 360ms var(--spring-out);
+}
+
+.tabs-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: title-in 220ms var(--ease-soft);
+}
+
+@keyframes title-in {
+  from {
+    opacity: 0;
+    translate: -0.25rem 0;
+  }
+}
+
+/* ───────── Ferramentas ───────── */
+
+.xp-tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.xp-tools .icon-btn {
+  font-size: 0.875rem;
+}
+
+.xp-sep {
+  width: 1px;
+  height: 0.875rem;
+  margin: 0 0.25rem;
+  background: var(--line-strong);
+}
+
+.xp-clock {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.25rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.xp-date {
+  color: var(--fg-2);
+}
+
+.xp-time {
+  font-weight: 600;
+}
+
+.xp-ring {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  rotate: -90deg;
+}
+
+.xp-ring-track {
+  fill: none;
+  stroke: var(--track);
+  stroke-width: 3;
+}
+
+.xp-ring-fill {
+  fill: none;
+  stroke: var(--fg-2);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.xp-ring[data-charging] .xp-ring-fill {
+  stroke: var(--ok);
+}
+
+.xp-ring[data-low] .xp-ring-fill {
+  stroke: var(--danger);
+}
+
+.wave--head {
+  height: 0.75rem;
+  gap: 0.15625rem;
+  margin-right: 0.25rem;
+}
+
+.wave--head i {
+  width: 0.15625rem;
+}
+
+/* ───────── Páginas ───────── */
+
+.xp-pages {
+  position: absolute;
+  top: 2.875rem;
+  bottom: 0.875rem;
+  left: 1.25rem;
+  right: 1.25rem;
+}
+
+.xp-page {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity, translate;
+  contain: layout paint style;
+  transition:
+    opacity 140ms ease,
+    translate 320ms var(--ease-soft);
+}
+
+.xp-page[data-side="left"] {
+  translate: -1rem 0;
+}
+
+.xp-page[data-side="right"] {
+  translate: 1rem 0;
+}
+
+.xp-page[data-active="true"] {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  transition:
+    opacity 220ms ease 40ms,
+    translate 400ms var(--spring-out);
+}
+
+html[data-motion="reduced"] :is(.tabs-indicator, .tabs-title) {
+  transition-duration: 120ms;
+  animation: none;
+}
+
+/* ═════════ Página: música ═════════ */
+
+.mp {
+  height: 100%;
+  display: flex;
+  gap: 1.25rem;
+}
+
+/* Bloco da música (capa, faixa, barra, controles). Com a letra, vira a coluna da esquerda. */
+.mp-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.mp[data-lyrics] .mp-main {
+  flex: 0 0 15.75rem;
+}
+
+.mp--empty {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.mp-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.mp-art {
+  flex: none;
+  width: 3.375rem;
+  height: 3.375rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.mp-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.artwork-rings {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 50% 50%, var(--shell) 0 0.25rem, transparent 0.3rem),
+    repeating-radial-gradient(circle at 50% 50%, rgb(var(--ink) / 0.07) 0 1px, transparent 1px 0.25rem),
+    radial-gradient(circle at 30% 25%, color-mix(in oklab, var(--accent) 45%, transparent), transparent 65%),
+    var(--surface-2);
+}
+
+.mp-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+}
+
+.mp-text strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-text span {
+  font-size: 0.75rem;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-app {
+  align-self: flex-start;
+  flex: none;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.mp-seek {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.625rem;
+  height: 1rem;
+}
+
+.mp-time {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.mp-time--end {
+  text-align: right;
+}
+
+/* Área de clique alta; trilho fino no meio. */
+.mp-track {
+  position: relative;
+  height: 1rem;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.mp-track::before,
+.mp-fill {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0.25rem;
+  margin-top: -0.125rem;
+  border-radius: 999px;
+  transition: scale 200ms var(--ease-soft);
+}
+
+.mp-track::before {
+  background: rgb(var(--ink) / 0.18);
+}
+
+.mp-fill {
+  display: block;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+.mp-fill[data-playing] {
+  transition:
+    transform 1s linear,
+    scale 200ms var(--ease-soft);
+}
+
+.mp-track:hover::before,
+.mp-track:hover .mp-fill,
+.mp-track[data-dragging]::before,
+.mp-track[data-dragging] .mp-fill {
+  scale: 1 1.6;
+}
+
+.mp-controls {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.mp-btn {
+  width: 1.875rem;
+  height: 1.875rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1rem;
+  color: var(--fg);
+  transition: background 200ms ease, scale 200ms var(--ease-soft), opacity 200ms ease;
+}
+
+.mp-btn--main {
+  font-size: 1.25rem;
+}
+
+.mp-btn:not(:disabled):hover {
+  background: var(--hover);
+}
+
+.mp-btn:not(:disabled):active {
+  scale: 0.88;
+}
+
+.mp-btn:disabled {
+  opacity: 0.28;
+}
+
+/* Volume: canto direito da linha de controles, espelhando o botão da letra. */
+.mp-vol {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.mp-btn--vol {
+  font-size: 1rem;
+  color: var(--fg-2);
+}
+
+.mp-track--vol {
+  width: 4.5rem;
+}
+
+.mp-track--vol .mp-fill {
+  background: rgb(var(--ink) / 0.78);
+  transition: scale 200ms var(--ease-soft);
+}
+
+/* ═════════ Página: Pomodoro ═════════ */
+
+.pp {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  align-items: center;
+}
+
+.pp-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-right: 1rem;
+}
+
+.pp-label {
+  font-size: 0.6875rem;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+.pp-big {
+  margin-top: 0.125rem;
+  font-family: var(--font-display);
+  font-size: 2.375rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp[data-status="paused"] .pp-big {
+  animation: pomo-blink 1.6s ease-in-out infinite;
+}
+
+.pp-sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pp-sub em {
+  font-style: normal;
+  color: var(--pomo-color);
+}
+
+.pp-bar {
+  margin-top: 0.625rem;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: rgb(var(--ink) / 0.12);
+  overflow: hidden;
+}
+
+.pp-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pomo-color);
+  transform-origin: left center;
+}
+
+.pp-bar span[data-running] {
+  transition: transform 1s linear;
+}
+
+.pp-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding-left: 1rem;
+  border-left: 1px solid rgb(var(--ink) / 0.1);
+}
+
+.pp-head {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pp-head-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-pill {
+  flex: none;
+  height: 1.625rem;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 200ms ease, scale 200ms var(--ease-soft);
+}
+
+.pp-pill:hover {
+  background: color-mix(in oklab, var(--accent) 88%, var(--fg));
+}
+
+.pp-pill:active {
+  scale: 0.95;
+}
+
+.pp-icon {
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: rgb(var(--ink) / 0.08);
+  color: var(--fg-2);
+  font-size: 0.8125rem;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.pp-icon:hover {
+  background: rgb(var(--ink) / 0.16);
+  color: var(--fg);
+}
+
+.pp-text {
+  flex: none;
+  height: 1.625rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--fg-2);
+}
+
+.pp-text:hover {
+  color: var(--fg);
+}
+
+.pp-round {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-top: 0.25rem;
+}
+
+.pp-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pp-seg {
+  position: relative;
+  flex: 1;
+  height: 0.3125rem;
+  border-radius: 999px;
+  background: rgb(var(--ink) / 0.14);
+}
+
+.pp-seg-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+
+.pp-seg[data-long] .pp-seg-fill {
+  background: var(--ok);
+}
+
+/* Ponto brilhante: anda por transform, como a barra. */
+.pp-glow-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: transform 1s linear;
+}
+
+.pp-glow {
+  position: absolute;
+  left: -0.3125rem;
+  top: 50%;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-top: -0.3125rem;
+  border-radius: 50%;
+  background: var(--knob);
+  box-shadow: 0 0 0 0.125rem var(--pomo-color);
+}
+
+.pp-dot {
+  flex: none;
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 50%;
+  background: rgb(var(--ink) / 0.2);
+}
+
+.pp-dot[data-on] {
+  background: var(--ok);
+}
+
+.pp-dot[data-now] {
+  scale: 1.4;
+}
+
+.pp-labels {
+  font-size: 0.625rem;
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-seg--label {
+  height: auto;
+  background: none;
+  text-align: center;
+}
+
+.pp-dot--ghost {
+  visibility: hidden;
+}
+
+.pp-foot {
+  font-size: 0.6875rem;
+  color: var(--fg-3);
+}
+
+html[data-motion="reduced"] :is(.xp-page, .xp-page[data-active="true"]) {
+  transition-duration: 140ms;
+  transition-delay: 0s;
+  translate: 0 0;
+}
+
+html[data-loops="off"] .pp-big {
+  animation: none;
+}
+
+/* ═════════ Letra sincronizada ═════════ */
+
+.mp-btn--lyrics {
+  position: absolute;
+  left: 0;
+  font-size: 1.0625rem;
+  color: var(--fg-2);
+}
+
+.mp-btn--lyrics[data-on] {
+  color: var(--accent-text);
+}
+
+.ly {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--line);
+}
+
+/* As bordas de cima/baixo somem num degradê; só a lista se move. */
+.ly-box {
+  position: absolute;
+  inset: -0.5rem 0 -0.5rem 1.125rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 28%, #000 72%, transparent);
+  mask-image: linear-gradient(transparent, #000 28%, #000 72%, transparent);
+}
+
+.ly-list {
+  will-change: transform;
+  transition: transform 520ms var(--ease-soft);
+}
+
+.ly-line {
+  margin: 0;
+  padding: 0.1875rem 0;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  opacity: 0.3;
+  cursor: pointer;
+  transition: opacity 320ms ease;
+}
+
+.ly-line[data-state="past"] {
+  opacity: 0.2;
+}
+
+.ly-line[data-state="now"] {
+  opacity: 1;
+}
+
+.ly-line:hover {
+  opacity: 0.7;
+}
+
+.ly-line[data-state="now"]:hover {
+  opacity: 1;
+}
+
+.ly-note {
+  margin: 0 0 0 1.125rem;
+  font-size: 0.8125rem;
+  color: var(--fg-2);
+}
+
+.ly-plain {
+  position: absolute;
+  inset: 0 0 0 1.125rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--fg-2);
+}
+
+.ly-plain p {
+  margin: 0;
+}
+
+html[data-motion="reduced"] .ly-list {
+  transition-duration: 160ms;
+}

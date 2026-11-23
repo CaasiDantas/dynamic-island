@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Dynamic Island",
+  "version": "0.5.0",
+  "identifier": "com.isaac.dynamic-island",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Dynamic Island",
+        "width": 520,
+        "height": 480,
+        "transparent": true,
+        "decorations": false,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "focus": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "Isaac",
+    "shortDescription": "Dynamic Island para Windows",
+    "windows": {
+      "nsis": {
+        "languages": [
+          "PortugueseBR"
+        ],
+        "installMode": "currentUser",
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDEwM0MwNEFGOTlGN0JBOTMKUldTVHV2ZVpyd1E4RU4yaUR3WTdRR0lreExsRDRyUmg0eHI0Vms5VXU3WjhENk55VE04VmlJb1EK",
+      "endpoints": [
+        "https://github.com/CaasiDantas/dynamic-island/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

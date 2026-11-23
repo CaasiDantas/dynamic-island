@@ -1,0 +1,379 @@
+/* ───────── Palco e cápsula ───────── */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+/*
+ * Moldura: anima a largura e segura as "orelhas" do notch. A ilha dentro
+ * dela anima altura e raio. As variáveis de duração/curva ficam aqui e são
+ * herdadas pela ilha, então as duas animações andam juntas.
+ */
+.island-frame {
+  --dur: 500ms;
+  --ease: var(--spring-out);
+  --ear: 0.625rem;
+
+  position: relative;
+  pointer-events: none;
+  transition: width var(--dur) var(--ease);
+}
+
+.island-frame[data-direction="shrink"] {
+  --dur: 440ms;
+  --ease: var(--spring-in);
+}
+
+/* Estilo flutuante: cápsula solta, sem orelhas. */
+.island-frame[data-style="floating"] .ear {
+  display: none;
+}
+
+/*
+ * Orelhas: cantos côncavos que ligam a ilha à borda da tela, como um notch
+ * de verdade. Um gradiente radial recorta o quarto de círculo.
+ */
+.ear {
+  position: absolute;
+  top: 0;
+  width: var(--ear);
+  height: var(--ear);
+  pointer-events: none;
+}
+
+.ear--l {
+  right: 100%;
+  background: radial-gradient(circle at 0 100%, transparent calc(var(--ear) - 0.5px), var(--shell) var(--ear));
+}
+
+.ear--r {
+  left: 100%;
+  background: radial-gradient(circle at 100% 100%, transparent calc(var(--ear) - 0.5px), var(--shell) var(--ear));
+}
+
+.island {
+  position: relative;
+  width: 100%;
+  pointer-events: auto;
+  /* altura e raio vêm inline de islandSize()/radiusCss() (layout.ts) */
+  background: var(--shell);
+  overflow: hidden;
+  isolation: isolate;
+  user-select: none;
+  cursor: default;
+  /* Isola a cápsula: o que muda dentro dela não invalida o resto da página. */
+  contain: layout paint style;
+  /* Sombra única e sem transição: é repintada junto com o tamanho, então fica leve. */
+  box-shadow: 0 0.5rem 1.25rem -0.5rem rgb(0 0 0 / 0.7);
+  transition:
+    height var(--dur) var(--ease),
+    border-radius var(--dur) var(--ease),
+    scale 220ms var(--ease-soft);
+}
+
+.island-frame[data-style="floating"] .island {
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--ink) / 0.06),
+    0 0.625rem 1.5rem -0.625rem rgb(0 0 0 / 0.65);
+}
+
+.island[data-mode="compact"] {
+  cursor: pointer;
+}
+
+/* Feedback de toque só no CSS (no estilo flutuante; o notch fica preso à borda). */
+.island-frame[data-style="floating"] .island[data-mode="compact"]:active {
+  scale: 0.965;
+}
+
+/* Brilho discreto vindo de cima, tingido pela cor de destaque. */
+.island-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 55% at 50% -18%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 70%),
+    linear-gradient(180deg, rgb(var(--ink) / 0.035), transparent 40%);
+  opacity: 0;
+  transition: opacity 500ms var(--ease-soft);
+}
+
+/* Notch: preto puro, como uma extensão da moldura da tela. O brilho é só do estilo flutuante. */
+.island-frame[data-style="notch"] .island-sheen {
+  display: none;
+}
+
+.island-sheen::after {
+  /* filete de luz no topo */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--ink) / 0.22), transparent);
+}
+
+.island:not([data-mode="compact"]) .island-sheen {
+  opacity: 1;
+}
+
+/* ───────── Camadas de conteúdo ───────── */
+
+.view {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  transform-origin: 50% 0;
+  opacity: 0;
+  scale: 0.94;
+  pointer-events: none;
+  /* Só opacidade e escala: as duas rodam no compositor (GPU), sem repintar. */
+  will-change: opacity, scale;
+  contain: layout paint style;
+  transition:
+    opacity 140ms ease,
+    scale 300ms var(--ease-soft);
+}
+
+.view[data-active="true"] {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+  transition:
+    opacity 240ms ease 100ms,
+    scale 520ms var(--spring-out) 40ms;
+}
+
+/* Animações decorativas de camadas ocultas ficam pausadas.
+   Seletores específicos: um "*" aqui recalculava o estilo de todos os
+   descendentes das vistas a cada troca de estado. */
+.view[data-active="false"] :is(.pulse-mark, .pulse-mark i) {
+  animation-play-state: paused;
+}
+
+/* ───────── Movimento reduzido ───────── */
+
+html[data-motion="reduced"] .island,
+html[data-motion="reduced"] .island-frame,
+html[data-motion="reduced"] .view,
+html[data-motion="reduced"] .view[data-active="true"] {
+  transition-duration: 140ms !important;
+  transition-delay: 0s !important;
+  transition-timing-function: ease !important;
+}
+
+html[data-motion="reduced"] .view {
+  scale: 1;
+}
+
+html[data-loops="off"] :is(.pulse-mark, .pulse-mark i) {
+  animation: none;
+}
+
+/* ───────── Degradê de fundo (ilha aberta) ─────────
+   Luz que sobe da borda de baixo e some antes do topo. Altura fixa ancorada
+   embaixo: a ilha cresce e a luz acompanha a borda sem recalcular nada.
+   Só a opacidade das camadas anima. */
+
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10.5rem;
+  opacity: 0;
+  background: linear-gradient(90deg, var(--g1), var(--g2) 50%, var(--g3));
+  -webkit-mask-image: linear-gradient(to top, #000, rgb(0 0 0 / 0.55) 30%, rgb(0 0 0 / 0.12) 70%, transparent);
+  mask-image: linear-gradient(to top, #000, rgb(0 0 0 / 0.55) 30%, rgb(0 0 0 / 0.12) 70%, transparent);
+  will-change: opacity;
+  transition: opacity 520ms var(--ease-soft);
+}
+
+/* Fechando: a luz sai rápido, antes da ilha encolher. */
+.island[data-mode="compact"] .glow-layer {
+  transition-duration: 200ms;
+}
+
+.glow--art {
+  --g1: hsl(215 60% 46%);
+  --g2: hsl(220 65% 46%);
+  --g3: hsl(230 60% 46%);
+}
+
+/* Padrão: degradê análogo gerado da cor de destaque (lib/color.ts). */
+.glow--calm {}
+
+.glow--focus {
+  --g1: var(--g2);
+  --g3: var(--g2);
+}
+
+.glow--break {
+  --g1: var(--ok);
+  --g2: color-mix(in oklab, var(--ok) 80%, var(--g2));
+  --g3: var(--ok);
+}
+
+/* Modo claro: sombra mais leve e um contorno fino para a ilha clara não se perder em fundos claros. */
+html[data-theme="light"] .island {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.07),
+    0 0.5rem 1.5rem -0.5rem rgb(0 0 0 / 0.28);
+}
+
+/* ───────── Repouso: gota e fio ─────────
+   Ilha parada cobre o mínimo das janelas de baixo. Mouse em cima → fechada;
+   clique → aberta. Só transform/opacity animam aqui (compositor). */
+
+.island[data-mode="rest"] {
+  cursor: pointer;
+}
+
+/* Orelhas acompanham o tamanho: menores na gota, somem no fio. */
+.ear {
+  transition: scale var(--dur) var(--ease);
+}
+.ear--l { transform-origin: 100% 0; }
+.ear--r { transform-origin: 0 0; }
+
+.island-frame[data-mode="rest"] .ear {
+  scale: 0.6;
+}
+
+.island-frame[data-mode="rest"][data-rest="line"] .ear {
+  scale: 0;
+}
+
+/* Contorno fraquinho: a gota/fio não some quando a janela de baixo também é escura.
+   Usa a cor de tinta do tema, então no tema claro vira um contorno escuro. */
+.island-frame[data-mode="rest"] .island {
+  box-shadow: 0 0 0 1px rgb(var(--ink) / 0.16);
+}
+
+.rest {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.rest-item {
+  display: grid;
+  place-items: center;
+}
+
+.rest-music {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.rest-art {
+  width: 0.6875rem;
+  height: 0.6875rem;
+  border-radius: 0.1875rem;
+}
+
+.rest .wave {
+  height: 0.5625rem;
+  gap: 0.125rem;
+}
+
+.rest .wave i {
+  width: 0.125rem;
+}
+
+.rest-dot {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 50%;
+}
+
+.rest-item--task .rest-dot { background: var(--warn, #f5a524); }
+.rest-item--claude .rest-dot {
+  background: var(--accent-text);
+  animation: rest-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rest-pulse {
+  50% { opacity: 0.35; }
+}
+
+/* ── Fio: um trecho por atividade, separados por um vão ── */
+.rest--line {
+  gap: 0.1875rem;
+  justify-content: stretch;
+}
+
+.rest--line .rest-item {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.rest--line .rest-dot {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+}
+
+.rest-pomo {
+  display: contents;
+}
+
+/* Fio + Pomodoro: o trecho vira a barra do tempo restante. */
+.rest-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  background: var(--pomo-color, var(--accent));
+  transition: transform 1s linear;
+}
+
+/* Fio + música: o trecho respira com o volume (spectrum.ts escreve o scaleX). */
+.wave-line {
+  --wave-color: var(--accent-text);
+  position: absolute;
+  inset: 0;
+  background: var(--wave-color);
+  transform: scaleX(0.25);
+  transition: transform 90ms linear;
+  will-change: transform;
+}
+
+.wave-line[data-art] {
+  --wave-color: color-mix(in oklab, var(--wave-art) 62%, rgb(var(--ink)));
+}
+
+.view[data-active="false"] .rest-dot {
+  animation-play-state: paused;
+}
+
+html[data-loops="off"] .rest-dot {
+  animation: none;
+}

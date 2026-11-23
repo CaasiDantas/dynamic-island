@@ -1,0 +1,22 @@
+/* Painel de diagnóstico (temporário). Fica abaixo da área da ilha, fora da região de clique. */
+.perf-hud {
+  position: fixed;
+  left: 50%;
+  bottom: 6px;
+  translate: -50% 0;
+  width: min(calc(100% - 12px), 440px);
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.82);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  pointer-events: none;
+  contain: strict;
+  height: 178px;
+}
+
+.perf-hud pre {
+  margin: 0;
+  font: 500 10.5px/1.45 "Cascadia Mono", Consolas, monospace;
+  color: #c8f7c5;
+  white-space: pre-wrap;
+}

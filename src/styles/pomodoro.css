@@ -1,0 +1,341 @@
+/* ═════════ Pomodoro ═════════
+   Cor por fase: foco usa a cor de destaque; pausas, um verde calmo. */
+
+[data-phase] {
+  --pomo-color: var(--accent);
+}
+
+[data-phase="short"],
+[data-phase="long"] {
+  --pomo-color: var(--ok);
+}
+
+/* Anel de progresso */
+.pomo-ring {
+  flex: none;
+  rotate: -90deg;
+}
+
+.pomo-ring-track {
+  fill: none;
+  stroke: rgb(var(--ink) / 0.13);
+}
+
+.pomo-ring-fill {
+  fill: none;
+  stroke: var(--pomo-color);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.pomo-done-mark {
+  width: 1rem;
+  height: 1rem;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--pomo-color);
+  color: var(--on-accent);
+  font-size: 0.6875rem;
+  animation: pomo-pop 600ms var(--spring-out) both;
+}
+
+@keyframes pomo-pop {
+  from { scale: 0.4; opacity: 0; }
+}
+
+/* ───────── Compacto ───────── */
+
+.pomo-compact {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.9375rem 0 0.75rem;
+}
+
+.pomo-compact-side {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.pomo-compact-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+
+.pomo-compact[data-status="done"] .pomo-compact-label {
+  color: var(--fg);
+}
+
+.pomo-compact-time {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--pomo-color);
+}
+
+.pomo-compact[data-status="paused"] .pomo-compact-time {
+  animation: pomo-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes pomo-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ───────── Botões ───────── */
+
+.pomo-primary-btn {
+  height: 2rem;
+  padding: 0 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-sm);
+  background: var(--pomo-color, var(--accent));
+  color: var(--on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: filter 200ms ease, scale 200ms var(--ease-soft);
+}
+
+.pomo-primary-btn svg {
+  font-size: 0.8125rem;
+}
+
+.pomo-primary-btn:hover {
+  filter: brightness(1.08);
+}
+
+.pomo-primary-btn:active {
+  scale: 0.96;
+}
+
+.pomo-primary-btn--lg {
+  height: 2.5rem;
+  flex: 1.4;
+  font-size: 0.8125rem;
+}
+
+.pomo-primary-btn--block {
+  width: 100%;
+  height: 2.625rem;
+  font-size: 0.8125rem;
+}
+
+.pomo-secondary-btn {
+  height: 2.5rem;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--fg);
+  transition: background 200ms ease, scale 200ms var(--ease-soft);
+}
+
+.pomo-secondary-btn svg {
+  font-size: 0.8125rem;
+}
+
+.pomo-secondary-btn:hover {
+  background: var(--surface-3);
+}
+
+.pomo-secondary-btn:active {
+  scale: 0.96;
+}
+
+.pomo-secondary-btn--danger {
+  color: var(--danger);
+}
+
+/* ───────── Tela do Pomodoro ───────── */
+
+.pomo-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem;
+}
+
+.pomo-dots {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3125rem;
+  padding-right: 0.25rem;
+}
+
+.pomo-dots i {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: rgb(var(--ink) / 0.16);
+  transition: background 300ms ease;
+}
+
+.pomo-dots i[data-on] {
+  background: var(--accent);
+}
+
+.pomo-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.pomo-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pomo-hero-phase {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pomo-color);
+}
+
+.pomo-hero-time {
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomo-hero[data-status="paused"] .pomo-hero-time {
+  animation: pomo-blink 1.6s ease-in-out infinite;
+}
+
+.pomo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.pomo-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.5rem 0.4375rem 0.75rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+}
+
+.pomo-stepper-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--fg-3);
+}
+
+.pomo-stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pomo-stepper-row button {
+  width: 1.625rem;
+  height: 1.625rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 0.75rem;
+  color: var(--fg-2);
+  transition: background 200ms ease, color 200ms ease, scale 200ms var(--ease-soft);
+}
+
+.pomo-stepper-row button:not(:disabled):hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.pomo-stepper-row button:not(:disabled):active {
+  scale: 0.9;
+}
+
+.pomo-stepper-row button:disabled {
+  opacity: 0.3;
+}
+
+.pomo-stepper-value {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomo-stepper-value small {
+  margin-left: 0.25rem;
+  font-family: var(--font-body, inherit);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--fg-3);
+}
+
+.pomo-toggles {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pomo-chip {
+  height: 1.875rem;
+  padding: 0 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.75rem;
+  color: var(--fg-2);
+  transition: color 200ms ease, background 200ms ease;
+}
+
+.pomo-chip-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: rgb(var(--ink) / 0.22);
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+
+.pomo-chip[aria-checked="true"] {
+  color: var(--fg);
+}
+
+.pomo-chip[aria-checked="true"] .pomo-chip-dot {
+  background: var(--accent);
+}
+
+.pomo-controls {
+  margin-top: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Movimento reduzido: sem animações decorativas. */
+html[data-loops="off"] :is(.pomo-done-mark, .pomo-compact-time, .pomo-hero-time) {
+  animation: none;
+}

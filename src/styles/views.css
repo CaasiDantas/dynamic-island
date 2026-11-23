@@ -1,0 +1,273 @@
+/* ═════════ Ilha fechada ═════════ */
+
+.compact {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 0.875rem;
+}
+
+.compact-side {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-width: 0;
+}
+
+.compact-side--end {
+  justify-content: flex-end;
+}
+
+.compact-time {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.compact-ring {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ── Música tocando: capa + visualizador ── */
+
+.compact-art {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 0.3125rem;
+}
+
+/* Visualizador: altura de cada barra vem do som real (spectrum.ts escreve o transform). */
+.wave {
+  --wave-color: var(--accent-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  height: 0.875rem;
+}
+
+.wave[data-art] {
+  /* Cor da capa puxada para o texto do tema: legível no escuro e no claro. */
+  --wave-color: color-mix(in oklab, var(--wave-art) 62%, rgb(var(--ink)));
+}
+
+.wave i {
+  width: 0.1875rem;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--wave-color);
+  transform: scaleY(0.16);
+  transition: transform 90ms linear;
+  will-change: transform;
+}
+
+html[data-motion="reduced"] .wave i {
+  transition-duration: 160ms;
+}
+
+.art-thumb {
+  flex: none;
+  display: block;
+  overflow: hidden;
+  background: var(--surface-2);
+  box-shadow: 0 0 0 0.5px rgb(var(--ink) / 0.12) inset;
+}
+
+.art-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.signal {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--fg-2);
+}
+
+.signal--warn {
+  color: var(--danger);
+}
+
+.badge {
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.3125rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* ═════════ Ajustes: barra lateral + conteúdo ═════════ */
+
+.settings {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 9.75rem 1fr;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.75rem 0.5rem 0.75rem 0.625rem;
+  border-right: 1px solid var(--line);
+}
+
+.settings-nav-head {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0 0.5rem -0.125rem;
+}
+
+.settings-nav-head h1 {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.nav-item {
+  height: 1.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78125rem;
+  color: var(--fg-2);
+  text-align: left;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.nav-item svg {
+  flex: none;
+  font-size: 0.9375rem;
+  color: var(--fg-3);
+  transition: color 140ms ease;
+}
+
+.nav-item:hover {
+  background: var(--hover);
+  color: var(--fg);
+}
+
+.nav-item[aria-current="page"] {
+  background: var(--surface-2);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.nav-item[aria-current="page"] svg {
+  color: var(--accent-text);
+}
+
+.settings-version {
+  margin-top: auto;
+  padding: 0 0.5rem;
+  font-size: 0.625rem;
+  color: var(--fg-4);
+}
+
+.settings-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.875rem 0 0 0;
+  animation: section-in 220ms var(--ease-soft);
+}
+
+@keyframes section-in {
+  from {
+    opacity: 0;
+    translate: 0 0.25rem;
+  }
+}
+
+.settings-title {
+  margin: 0.25rem 1rem 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.settings-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 1rem 1rem 1rem;
+}
+
+.hotkey {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kbd-btn {
+  height: 1.875rem;
+  min-width: 9.5rem;
+  padding: 0 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 0.71875rem;
+  color: var(--fg-2);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.kbd-btn:hover {
+  background: var(--surface-3);
+}
+
+.kbd-btn[data-recording] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+html[data-motion="reduced"] .settings-main {
+  animation: none;
+}
+
+/* ═════════ Cabeçalho dos painéis (Pomodoro, Claude, Tarefas) ═════════ */
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0 0.125rem;
+}
+
+.settings-head h1 {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.settings-head .settings-version {
+  margin: 0 0 0 auto;
+  padding: 0;
+  font-size: 0.6875rem;
+  color: var(--fg-3);
+}
