@@ -85,7 +85,7 @@ export function App() {
   const systemDark = useSystemDark();
   useEffect(() => {
     applyAppearance(settings);
-  }, [settings.theme, settings.accent, settings.surface, settings.surfaceOpacity, settings.glow, systemDark]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [settings.theme, settings.accent, settings.surface, settings.surfaceOpacity, settings.glow, settings.edgeLight, systemDark]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ordem e visibilidade das abas.
   useEffect(() => configurePages(settings.pageOrder, settings.hiddenPages), [settings.pageOrder, settings.hiddenPages]);

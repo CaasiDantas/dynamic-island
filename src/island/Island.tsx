@@ -488,6 +488,7 @@ export function Island({ settings, scale, onSettingsChange }: Props) {
       >
         <IslandGlow mode={mode} />
         <span className="island-sheen" aria-hidden />
+        <span className="island-edge" aria-hidden />
         <View mode="rest" current={mode} box={islandSize("rest", active, false, restShape, restActivities.length)}>
           <RestContent shape={restShape} activities={restActivities} />
         </View>

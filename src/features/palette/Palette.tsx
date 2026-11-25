@@ -19,7 +19,7 @@ import { PAGE_DEFS, useVisiblePages, type PageId } from "../../island/pages";
 import type { SettingsSection } from "../../island/settingsNav";
 import { resolveMode } from "../../lib/theme";
 import type { Settings } from "../../lib/settings";
-import { focusIsland, claude } from "../claude/store";
+import { focusIsland, claude, currentProvider, providerName } from "../claude/store";
 import { media, useMedia } from "../media/store";
 import { pomodoro, usePomodoro, PHASE_LABEL } from "../pomodoro/store";
 import { hostOf, nameFromUrl, normalizeUrl, shortcuts, subtitleOf, useShortcuts } from "../shortcuts/store";
@@ -125,7 +125,8 @@ export function PaletteView({ ctx, openSeq }: { ctx: PaletteCtx; openSeq: number
     }
 
     out.push({ id: "todo:new", group: "Ações", title: "Nova tarefa", keywords: "to-do lembrete adicionar", icon: IconPlus, run: ctx.newTask });
-    out.push({ id: "claude:open", group: "Ações", title: "Conversar com o Claude", keywords: "ia pergunta chat", icon: IconSpark, run: ctx.openClaude });
+    const ai = currentProvider();
+    out.push({ id: "claude:open", group: "Ações", title: ai ? `Conversar com ${providerName(ai)}` : "Conectar minha IA", keywords: "ia pergunta chat claude chatgpt codex gemini", icon: IconSpark, run: ctx.openClaude });
     const dark = resolveMode(ctx.settings.theme) === "dark";
     out.push({
       id: "theme:toggle",
@@ -180,11 +181,11 @@ export function PaletteView({ ctx, openSeq }: { ctx: PaletteCtx; openSeq: number
             toast("Atalho adicionado");
           },
         });
-    } else if (query.trim().length > 2) {
+    } else if (query.trim().length > 2 && currentProvider()) {
       extra.push({
         id: "x:ask",
         group: "Sugestão",
-        title: `Perguntar ao Claude: “${query.trim()}”`,
+        title: `Perguntar ao ${providerName(currentProvider())}: “${query.trim()}”`,
         icon: IconSpark,
         pinned: true,
         run: () => {

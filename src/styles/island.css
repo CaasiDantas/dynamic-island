@@ -125,6 +125,34 @@
   opacity: 1;
 }
 
+/* Luz de destaque: a ilha iluminada de cima na cor de destaque, para não sumir
+   em fundo escuro. Mais forte no topo, um contorno fino que esmaece até embaixo.
+   Com o mouse em cima (ilha fechada) acende mais. Só a opacidade anima. */
+.island-edge {
+  --edge-level: 0.55;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(75% 100% at 50% 0, color-mix(in oklab, var(--accent) 40%, transparent), transparent 75%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 75%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000, rgb(0 0 0 / 0.4));
+  mask-image: linear-gradient(to bottom, #000, rgb(0 0 0 / 0.4));
+  opacity: calc(var(--edge-level) * var(--edge-light, 0));
+  will-change: opacity;
+  transition: opacity 320ms var(--ease-soft);
+}
+
+.island[data-mode="compact"] .island-edge {
+  --edge-level: 1;
+}
+
+/* Aberta: o degradê de baixo já destaca; a luz fica só no contorno discreto. */
+.island:not([data-mode="rest"], [data-mode="compact"]) .island-edge {
+  --edge-level: 0.4;
+}
+
 /* ───────── Camadas de conteúdo ───────── */
 
 .view {

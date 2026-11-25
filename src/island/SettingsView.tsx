@@ -124,9 +124,10 @@ function AppearanceSection({ settings, onChange }: SectionProps) {
     settings.accent.toLowerCase() === DEFAULT_APPEARANCE.accent &&
     settings.surface === DEFAULT_APPEARANCE.surface &&
     settings.surfaceOpacity === DEFAULT_APPEARANCE.surfaceOpacity &&
-    settings.glow === DEFAULT_APPEARANCE.glow;
+    settings.glow === DEFAULT_APPEARANCE.glow &&
+    settings.edgeLight === DEFAULT_APPEARANCE.edgeLight;
 
-  const appearance = { theme: settings.theme, accent: settings.accent, surface: settings.surface, surfaceOpacity: settings.surfaceOpacity, glow: settings.glow };
+  const appearance = { theme: settings.theme, accent: settings.accent, surface: settings.surface, surfaceOpacity: settings.surfaceOpacity, glow: settings.glow, edgeLight: settings.edgeLight };
 
   return (
     <>
@@ -208,6 +209,9 @@ function AppearanceSection({ settings, onChange }: SectionProps) {
         <Row label="Brilho de fundo" hint={settings.glow === 0 ? "Desligado" : `${Math.round(settings.glow * 100)}%`}>
           <Slider min={0} max={100} value={Math.round(settings.glow * 100)} onChange={(v) => onChange({ glow: v / 100 })} label="Intensidade do degradê de fundo" />
         </Row>
+        <Row label="Luz de destaque" hint={settings.edgeLight === 0 ? "Desligada" : `${Math.round(settings.edgeLight * 100)}%`}>
+          <Slider min={0} max={100} value={Math.round(settings.edgeLight * 100)} onChange={(v) => onChange({ edgeLight: v / 100 })} label="Intensidade da luz de destaque" />
+        </Row>
       </Group>
 
       <Group title="Temas salvos">
@@ -218,7 +222,7 @@ function AppearanceSection({ settings, onChange }: SectionProps) {
                 <span key={t.id} className="theme-chip">
                   <button
                     onClick={() => {
-                      onChange({ theme: t.theme, accent: t.accent, surface: t.surface ?? "", surfaceOpacity: t.surfaceOpacity, glow: t.glow });
+                      onChange({ theme: t.theme, accent: t.accent, surface: t.surface ?? "", surfaceOpacity: t.surfaceOpacity, glow: t.glow, edgeLight: t.edgeLight ?? 0 });
                       toast(`Tema “${t.name}” aplicado`);
                     }}
                     title={`Aplicar ${t.name}`}

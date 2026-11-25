@@ -81,7 +81,7 @@ const demo = {
     const answer =
       "Ela segue o **cursor**: o Rust acompanha o mouse e avisa quando ele sai da cápsula.\n\n" +
       "Aí a ilha espera **180 ms** e volta ao modo compacto. Painéis como este esperam **6 s**, e nada fecha enquanto você digita.";
-    const base = { folder, busy: true, sessionId: "demo" };
+    const base = { folder, busy: true, sessionId: "demo", provider: "claude" as const };
     __demoSetClaude({ ...base, turns: [user, { id: 2, role: "assistant", parts: [], status: "streaming" }] });
     await sleep(700);
     const tools: Turn["parts"] = [

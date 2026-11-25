@@ -2,9 +2,11 @@ import { useSyncExternalStore } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { isTauri } from "../../lib/native";
+import { providerDef, type ProviderId } from "./providers";
 
 /**
- * Conversa com o Claude Code instalado no PC (ver src-tauri/src/claude.rs).
+ * Conversa com a IA que a pessoa conectou (Claude Code, Codex...), pelo
+ * programa oficial instalado no PC (ver src-tauri/src/ai.rs e claude.rs).
  *
  * O Rust manda eventos pequenos (texto aos pedaços, ferramenta usada, fim).
  * O texto é acumulado e aplicado no estado no máximo a cada FLUSH_MS, para a
@@ -30,18 +32,73 @@ export interface ClaudeState {
   sessionId: string | null;
   /** Sobe a cada resposta concluída (a ilha usa para avisar). */
   doneSeq: number;
+  /** IA conectada; null = ainda não escolheu (a aba mostra "Conectar minha IA"). */
+  provider: ProviderId | null;
+  /** Contexto ocupado na conversa; window = tamanho total, quando conhecido. */
+  context: { tokens: number; window: number | null } | null;
+  /** Lista "Conectar minha IA" aberta no painel (para conectar ou trocar de IA). */
+  choosing: boolean;
+  /** Últimos limites de uso informados por cada IA (guardados entre sessões). */
+  limits: Partial<Record<ProviderId, LimitWindow[]>>;
+  /** Conversa atual no histórico (null = ainda não teve resposta). */
+  chatId: string | null;
+  /** Conversas salvas, da mais recente para a mais antiga. */
+  history: Conversation[];
+  /** Lista do histórico aberta no painel. */
+  showHistory: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  provider: ProviderId;
+  folder: string | null;
+  /** Sessão da IA: reabrir continua a mesma conversa do lado dela. */
+  sessionId: string | null;
+  title: string;
+  updatedAt: number;
+  turns: Turn[];
+}
+
+export interface LimitWindow {
+  /** "five_hour", "seven_day", "seven_day_opus", "daily"... */
+  kind: string;
+  /** Quanto já foi usado, de 0 a 1. */
+  used: number;
+  /** Quando zera (segundos desde 1970). */
+  resetsAt: number | null;
 }
 
 type RustEvent =
   | { kind: "session"; id: number; sessionId: string }
   | { kind: "text"; id: number; text: string }
   | { kind: "tool"; id: number; name: string; detail: string }
+  | { kind: "usage"; id: number; tokens: number; window: number | null }
+  | { kind: "limits"; id: number; windows: LimitWindow[] }
   | { kind: "done"; id: number; ok: boolean; cancelled: boolean; text: string; sessionId: string | null };
 
 const FLUSH_MS = 60;
 const FOLDER_KEY = "island.claude.folder.v1";
 const RECENT_KEY = "island.claude.recent.v1";
 const MAX_RECENT = 5;
+const PROVIDER_KEY = "island.ai.provider.v1";
+const LIMITS_KEY = "island.ai.limits.v1";
+const HISTORY_KEY = "island.ai.history.v1";
+/** Histórico enxuto: o localStorage tem poucos MB para o app inteiro. */
+const MAX_CONVERSATIONS = 40;
+const MAX_TURNS = 60;
+const MAX_CHARS = 120_000;
+
+/** Quem já usava o Claude antes do "Conectar minha IA" continua com ele. */
+function loadProvider(): ProviderId | null {
+  const saved = loadJson<ProviderId | null>(PROVIDER_KEY, null);
+  if (saved && providerDef(saved)?.ready) return saved;
+  try {
+    if (localStorage.getItem(FOLDER_KEY) !== null || localStorage.getItem(RECENT_KEY) !== null) return "claude";
+  } catch {
+    /* sem armazenamento */
+  }
+  return null;
+}
 
 function loadJson<T>(key: string, fallback: T): T {
   try {
@@ -67,6 +124,13 @@ let state: ClaudeState = {
   recentFolders: loadJson<string[]>(RECENT_KEY, []),
   sessionId: null,
   doneSeq: 0,
+  provider: loadProvider(),
+  context: null,
+  choosing: false,
+  limits: loadJson<ClaudeState["limits"]>(LIMITS_KEY, {}),
+  chatId: null,
+  history: loadJson<Conversation[]>(HISTORY_KEY, []),
+  showHistory: false,
 };
 
 const listeners = new Set<() => void>();
@@ -120,6 +184,16 @@ function onEvent(e: RustEvent) {
       pendingText += e.text;
       flushTimer ??= window.setTimeout(flush, FLUSH_MS);
       break;
+    case "usage":
+      set({ context: { tokens: e.tokens, window: e.window } });
+      break;
+    case "limits": {
+      if (!state.provider) break;
+      const limits = { ...state.limits, [state.provider]: e.windows };
+      saveJson(LIMITS_KEY, limits);
+      set({ limits });
+      break;
+    }
     case "tool":
       flush();
       updateRunning((t) => ({ ...t, parts: [...t.parts, { kind: "tool", name: e.name, detail: e.detail }] }));
@@ -143,6 +217,33 @@ function finish(e: Extract<RustEvent, { kind: "done" }>) {
     { busy: false, sessionId: e.sessionId ?? state.sessionId, doneSeq: e.cancelled ? state.doneSeq : state.doneSeq + 1 },
   );
   runningId = null;
+  saveCurrent();
+}
+
+/** Guarda a conversa atual no histórico (só as mensagens prontas, sem as que ainda chegam). */
+function saveCurrent() {
+  const provider = state.provider;
+  const turns = state.turns.filter((t) => t.status !== "streaming");
+  if (!provider || !turns.some((t) => t.role === "assistant")) return;
+  // Corta do começo até caber: as últimas mensagens importam mais.
+  let kept = turns.slice(-MAX_TURNS);
+  while (kept.length > 2 && JSON.stringify(kept).length > MAX_CHARS) kept = kept.slice(2);
+  const id = state.chatId ?? `c${Date.now().toString(36)}`;
+  const firstUser = turns.find((t) => t.role === "user");
+  const title = (firstUser ? turnText(firstUser) : "Conversa").replace(/\s+/g, " ").trim().slice(0, 90);
+  const convo: Conversation = { id, provider, folder: state.folder, sessionId: state.sessionId, title, updatedAt: Date.now(), turns: kept };
+  const history = [convo, ...state.history.filter((c) => c.id !== id)].slice(0, MAX_CONVERSATIONS);
+  saveHistory(history);
+  set({ chatId: id, history });
+}
+
+function saveHistory(history: Conversation[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    // Sem espaço: guarda só a metade mais recente.
+    saveJson(HISTORY_KEY, history.slice(0, Math.ceil(history.length / 2)));
+  }
 }
 
 function ensureStarted() {
@@ -167,10 +268,14 @@ export const claude = {
     set({ turns: [...state.turns, userTurn, reply], busy: true });
 
     if (!isTauri) {
-      failRunning("O Claude só responde dentro do app (npm run tauri dev).");
+      failRunning("A IA só responde dentro do app (npm run tauri dev).");
       return;
     }
-    invoke("claude_ask", { id: reply.id, prompt: text, folder: state.folder, sessionId: state.sessionId }).catch((err) =>
+    if (!state.provider) {
+      failRunning("Conecte uma IA primeiro.");
+      return;
+    }
+    invoke("ai_ask", { provider: state.provider, id: reply.id, prompt: text, folder: state.folder, sessionId: state.sessionId }).catch((err) =>
       failRunning(String(err)),
     );
   },
@@ -183,7 +288,50 @@ export const claude = {
   /** Esquece a conversa; a próxima pergunta abre uma sessão nova. */
   newChat() {
     if (state.busy) claude.cancel();
-    set({ turns: [], sessionId: null });
+    set({ turns: [], sessionId: null, context: null, chatId: null, showHistory: false });
+  },
+
+  /** Abre/fecha a lista do histórico no painel. */
+  toggleHistory(open = !state.showHistory) {
+    if (open !== state.showHistory) set({ showHistory: open, choosing: false });
+  },
+
+  /** Reabre uma conversa salva: mesma IA, mesma pasta e a sessão dela (dá para continuar). */
+  openConversation(id: string) {
+    const c = state.history.find((h) => h.id === id);
+    if (!c) return;
+    if (state.busy) claude.cancel();
+    saveJson(PROVIDER_KEY, c.provider);
+    saveJson(FOLDER_KEY, c.folder);
+    set({
+      provider: c.provider,
+      folder: c.folder,
+      sessionId: c.sessionId,
+      turns: c.turns,
+      chatId: c.id,
+      context: null,
+      showHistory: false,
+      choosing: false,
+    });
+  },
+
+  deleteConversation(id: string) {
+    const history = state.history.filter((c) => c.id !== id);
+    saveHistory(history);
+    set({ history, ...(state.chatId === id ? { chatId: null } : {}) });
+  },
+
+  /** Troca a IA conectada; a conversa recomeça (cada IA tem as próprias sessões). */
+  setProvider(provider: ProviderId | null) {
+    if (provider === state.provider) return;
+    saveJson(PROVIDER_KEY, provider);
+    if (state.busy) claude.cancel();
+    set({ provider, turns: [], sessionId: null, context: null, choosing: false, chatId: null });
+  },
+
+  /** Abre/fecha a lista de IAs no painel (conectar outra ou trocar). */
+  openChooser(open = true) {
+    if (open !== state.choosing) set({ choosing: open, showHistory: false });
   },
 
   setFolder(folder: string | null) {
@@ -193,7 +341,7 @@ export const claude = {
     saveJson(RECENT_KEY, recentFolders);
     // As sessões do Claude Code são por pasta: trocar de pasta começa outra conversa.
     if (state.busy) claude.cancel();
-    set({ folder, recentFolders, turns: [], sessionId: null });
+    set({ folder, recentFolders, turns: [], sessionId: null, context: null, chatId: null });
   },
 
   /** Seletor de pasta nativo do Windows. */
@@ -202,7 +350,7 @@ export const claude = {
     picking = true;
     try {
       const picked = await invoke<string | null>("plugin:dialog|open", {
-        options: { directory: true, multiple: false, title: "Pasta para perguntar ao Claude", defaultPath: state.folder ?? undefined },
+        options: { directory: true, multiple: false, title: "Pasta para perguntar à IA", defaultPath: state.folder ?? undefined },
       });
       if (typeof picked === "string" && picked) claude.setFolder(picked);
     } catch (err) {
@@ -256,11 +404,20 @@ const TOOL_LABEL: Record<string, string> = {
   Grep: "Buscando no código",
   WebSearch: "Pesquisando",
   WebFetch: "Abrindo",
+  command: "Executando",
+  tool: "Usando",
 };
 
 export function toolLabel(p: Extract<Part, { kind: "tool" }>) {
   const label = TOOL_LABEL[p.name] ?? p.name;
   return p.detail ? `${label} ${p.detail}` : label;
+}
+
+/** Nome da IA conectada, para textos da interface ("Pergunte ao ChatGPT"). */
+export const currentProvider = () => state.provider;
+
+export function providerName(id: ProviderId | null) {
+  return providerDef(id)?.name ?? "IA";
 }
 
 /** Modo demonstração (vídeo de apresentação): monta a conversa sem chamar o Claude Code. */

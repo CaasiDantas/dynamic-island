@@ -47,6 +47,8 @@ export interface Appearance {
   surfaceOpacity: number;
   /** Intensidade do degradê de fundo da ilha aberta (0 desliga). */
   glow: number;
+  /** Luz de contorno na cor de destaque, vinda de cima (0 desliga). Acende mais com o mouse em cima. */
+  edgeLight: number;
 }
 
 export interface Settings extends Appearance {
@@ -78,6 +80,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   surface: "",
   surfaceOpacity: 1,
   glow: 0.5,
+  edgeLight: 0,
 };
 
 /** Fundos sugeridos para a ilha (vazio = automático pelo modo). */
@@ -133,6 +136,7 @@ function normalize(raw: Partial<Settings> & Record<string, unknown>): Settings {
   if (typeof s.surface !== "string" || (s.surface && !parseHex(s.surface))) s.surface = "";
   s.surfaceOpacity = Math.min(1, Math.max(0.7, Number(s.surfaceOpacity) || 1));
   s.glow = Math.min(1, Math.max(0, Number.isFinite(Number(s.glow)) ? Number(s.glow) : DEFAULT_SETTINGS.glow));
+  s.edgeLight = Math.min(1, Math.max(0, Number.isFinite(Number(s.edgeLight)) ? Number(s.edgeLight) : DEFAULT_SETTINGS.edgeLight));
   // Páginas novas entram no fim; ids desconhecidos saem.
   const order = (Array.isArray(s.pageOrder) ? s.pageOrder : []).filter((p) => ALL_PAGES.includes(p));
   s.pageOrder = [...new Set([...order, ...ALL_PAGES])];

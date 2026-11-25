@@ -267,6 +267,14 @@ export const IconPencil = (p: IconProps) => (
   </svg>
 );
 
+export const IconHistory = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9" />
+    <path d="M4.5 4.5V9H9" />
+    <path d="M12 8v4.2l2.8 1.8" />
+  </svg>
+);
+
 export const IconTrash = (p: IconProps) => (
   <svg {...base} {...p}>
     <path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.8 12.2h9.4L17.5 7" />

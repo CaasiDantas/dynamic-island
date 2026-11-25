@@ -2,6 +2,15 @@
 
 Todas as mudanças relevantes de cada versão. O app instalado mostra estas notas ao oferecer a atualização.
 
+## 0.7.0
+
+**Novidades**
+- **Conectar minha IA:** a aba de IA agora funciona com ChatGPT, Gemini, Claude e Cursor. Escolha a que você já assina, clique em Instalar (a ilha baixa tudo o que falta, inclusive o Node.js) e entre com a sua conta na página oficial. A ilha nunca vê a sua senha.
+- **Trocar de IA** a qualquer momento pelo logo no topo da conversa.
+- **Contexto e limites:** uma faixa mostra quanto do contexto a conversa já usou e, quando a IA informa, os limites de 5 horas e da semana do seu plano.
+- **Histórico de conversas:** cada conversa fica salva; reabra para continuar de onde parou, busque pelo texto ou apague as que não quiser.
+- **Luz de destaque:** em Ajustes → Aparência, uma luz na cor de destaque vinda de cima deixa a ilha visível em fundos escuros e acende mais com o mouse em cima.
+
 ## 0.6.0
 
 **Novidades**

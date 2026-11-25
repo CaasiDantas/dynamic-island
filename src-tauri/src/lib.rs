@@ -1,4 +1,5 @@
 mod apps;
+mod ai;
 mod claude;
 mod hotkey;
 mod media;
@@ -351,6 +352,10 @@ pub fn run() {
             claude::claude_ask,
             claude::claude_cancel,
             claude::focus_island,
+            ai::ai_providers,
+            ai::ai_install,
+            ai::ai_login,
+            ai::ai_ask,
             hotkey::set_global_hotkey,
             monitor::hw_watch,
             monitor::privacy_state

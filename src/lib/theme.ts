@@ -33,7 +33,7 @@ let lastKey = "";
 export function applyAppearance(a: Appearance) {
   // Fundo personalizado decide se o texto é claro ou escuro.
   const mode = modeForSurface(a.surface, resolveMode(a.theme));
-  const key = `${mode}|${a.accent}|${a.surface}|${a.surfaceOpacity}|${a.glow}`;
+  const key = `${mode}|${a.accent}|${a.surface}|${a.surfaceOpacity}|${a.glow}|${a.edgeLight}`;
   if (key === lastKey) return;
   lastKey = key;
   const root = document.documentElement;
@@ -41,6 +41,7 @@ export function applyAppearance(a: Appearance) {
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
   root.style.setProperty("--shell-alpha", String(a.surfaceOpacity));
   root.style.setProperty("--glow-strength", String(a.glow));
+  root.style.setProperty("--edge-light", String(a.edgeLight));
   root.dataset.theme = mode;
 }
 
@@ -78,7 +79,7 @@ function commit(next: SavedTheme[]) {
 export const savedThemes = {
   add(name: string, a: Appearance) {
     const clean = name.trim() || `Tema ${themes.length + 1}`;
-    const theme: SavedTheme = { id: crypto.randomUUID(), name: clean, theme: a.theme, accent: a.accent, surface: a.surface, surfaceOpacity: a.surfaceOpacity, glow: a.glow };
+    const theme: SavedTheme = { id: crypto.randomUUID(), name: clean, theme: a.theme, accent: a.accent, surface: a.surface, surfaceOpacity: a.surfaceOpacity, glow: a.glow, edgeLight: a.edgeLight };
     commit([...themes, theme]);
     return theme;
   },

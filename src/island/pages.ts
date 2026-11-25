@@ -16,7 +16,7 @@ export interface PageDef {
 export const PAGE_DEFS: Record<PageId, PageDef> = {
   media: { id: "media", title: "Música", keywords: "mídia spotify youtube player letra", icon: IconMusic },
   pomodoro: { id: "pomodoro", title: "Pomodoro", keywords: "foco timer cronômetro pausa", icon: IconTimer },
-  claude: { id: "claude", title: "Claude", keywords: "ia chat pergunta código", icon: IconSpark },
+  claude: { id: "claude", title: "IA", keywords: "ia chat pergunta código claude chatgpt codex gemini cursor", icon: IconSpark },
   todo: { id: "todo", title: "Tarefas", keywords: "to-do lembrete lista calendário", icon: IconListCheck },
   shortcuts: { id: "shortcuts", title: "Atalhos", keywords: "sites favoritos links acesso rápido", icon: IconGrid },
   weather: { id: "weather", title: "Clima", keywords: "tempo temperatura chuva previsão umidade vento", icon: IconCloudSun },

@@ -29,30 +29,44 @@ const TOOLS_NO_FOLDER: &str = "WebSearch,WebFetch";
 
 /// Processos em andamento, por id de pedido (o frontend escolhe o id).
 #[derive(Default)]
-pub struct ClaudeRuns(Mutex<HashMap<u64, Child>>);
+pub struct ClaudeRuns(pub(crate) Mutex<HashMap<u64, Child>>);
 
 #[derive(Serialize, Clone)]
 #[serde(tag = "kind", rename_all = "camelCase", rename_all_fields = "camelCase")]
-enum ClaudeEvent {
+pub(crate) enum ClaudeEvent {
     /// Sessão criada/retomada: o frontend guarda o id para as próximas perguntas.
     Session { id: u64, session_id: String },
     /// Pedaço de texto da resposta, na ordem em que chega.
     Text { id: u64, text: String },
     /// Claude usou uma ferramenta (ex.: leu um arquivo).
     Tool { id: u64, name: String, detail: String },
+    /// Contexto ocupado na conversa (tokens) e o tamanho da janela, quando conhecido.
+    Usage { id: u64, tokens: u64, window: Option<u64> },
+    /// Limites de uso do plano (janela de 5 horas, semana...), quando a IA informa.
+    Limits { id: u64, windows: Vec<LimitWindow> },
     /// Fim do pedido. `text` é a resposta final ou a mensagem de erro.
     Done { id: u64, ok: bool, cancelled: bool, text: String, session_id: Option<String> },
 }
 
-fn emit(app: &AppHandle, event: ClaudeEvent) {
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct LimitWindow {
+    /// "five_hour", "seven_day", "seven_day_opus"...
+    pub kind: String,
+    /// Quanto já foi usado, de 0 a 1.
+    pub used: f64,
+    /// Quando zera (segundos desde 1970), se informado.
+    pub resets_at: Option<u64>,
+}
+
+pub(crate) fn emit(app: &AppHandle, event: ClaudeEvent) {
     let _ = app.emit("island://claude", event);
 }
 
 /// Acha o `claude.exe` nativo. O atalho do npm (`claude.cmd`) só repassa para ele,
 /// e chamar o .exe direto evita janela de console e facilita encerrar o processo.
-fn find_claude() -> Option<PathBuf> {
-    let path = std::env::var_os("PATH")?;
-    for dir in std::env::split_paths(&path) {
+pub(crate) fn find_claude() -> Option<PathBuf> {
+    for dir in crate::ai::path_dirs() {
         let exe = dir.join("claude.exe");
         if exe.is_file() {
             return Some(exe);
@@ -74,12 +88,12 @@ fn find_claude() -> Option<PathBuf> {
 }
 
 /// Pasta neutra para conversas sem pasta escolhida (o Claude Code guarda as sessões por pasta).
-fn scratch_dir(app: &AppHandle) -> PathBuf {
+pub(crate) fn scratch_dir(app: &AppHandle, name: &str) -> PathBuf {
     let dir = app
         .path()
         .app_local_data_dir()
         .unwrap_or_else(|_| std::env::temp_dir().join("dynamic-island"))
-        .join("claude");
+        .join(name);
     let _ = std::fs::create_dir_all(&dir);
     dir
 }
@@ -93,7 +107,7 @@ pub fn claude_ask(
     folder: Option<String>,
     session_id: Option<String>,
 ) -> Result<(), String> {
-    let exe = find_claude().ok_or("Claude Code não encontrado. Instale com: npm i -g @anthropic-ai/claude-code")?;
+    let exe = find_claude().ok_or("Claude Code não encontrado. Conecte o Claude de novo para instalar.")?;
 
     let folder = folder.filter(|f| !f.trim().is_empty());
     let cwd = match &folder {
@@ -104,7 +118,7 @@ pub fn claude_ask(
             }
             p
         }
-        None => scratch_dir(&app),
+        None => scratch_dir(&app, "claude"),
     };
     let tools = if folder.is_some() { TOOLS_WITH_FOLDER } else { TOOLS_NO_FOLDER };
 
@@ -156,8 +170,7 @@ pub fn claude_ask(
 pub fn claude_cancel(runs: State<'_, ClaudeRuns>, id: u64) {
     let child = runs.0.lock().ok().and_then(|mut map| map.remove(&id));
     if let Some(mut child) = child {
-        let _ = child.kill();
-        let _ = child.wait();
+        crate::ai::kill_tree(&mut child);
     }
 }
 
@@ -167,7 +180,7 @@ pub fn focus_island(window: tauri::WebviewWindow) -> Result<(), String> {
     window.set_focus().map_err(|e| e.to_string())
 }
 
-fn is_session_id(s: &str) -> bool {
+pub(crate) fn is_session_id(s: &str) -> bool {
     !s.is_empty() && s.len() <= 64 && s.chars().all(|c| c.is_ascii_hexdigit() || c == '-')
 }
 
@@ -175,12 +188,17 @@ fn read_stream(app: AppHandle, id: u64, stdout: std::process::ChildStdout, stder
     let mut seen_tools = HashSet::new();
     let mut session: Option<String> = None;
     let mut finished = false;
+    let mut window: Option<u64> = Some(200_000);
 
     for line in BufReader::new(stdout).lines() {
         let Ok(line) = line else { break };
         let Ok(v) = serde_json::from_str::<Value>(&line) else { continue };
         match v["type"].as_str() {
             Some("system") if v["subtype"] == "init" => {
+                // Modelos com contexto de 1 milhão vêm marcados com [1m].
+                if let Some(model) = v["model"].as_str() {
+                    window = Some(if model.contains("[1m]") { 1_000_000 } else { 200_000 });
+                }
                 if let Some(s) = v["session_id"].as_str() {
                     session = Some(s.to_string());
                     emit(&app, ClaudeEvent::Session { id, session_id: s.to_string() });
@@ -195,6 +213,15 @@ fn read_stream(app: AppHandle, id: u64, stdout: std::process::ChildStdout, stder
                 }
             }
             Some("assistant") => {
+                // Contexto ocupado = tudo que entrou nesta chamada + o que saiu.
+                let u = &v["message"]["usage"];
+                let tokens = ["input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens"]
+                    .iter()
+                    .filter_map(|k| u[*k].as_u64())
+                    .sum::<u64>();
+                if tokens > 0 {
+                    emit(&app, ClaudeEvent::Usage { id, tokens, window });
+                }
                 // O texto já veio aos pedaços; daqui só interessam as ferramentas usadas.
                 let Some(blocks) = v["message"]["content"].as_array() else { continue };
                 for b in blocks.iter().filter(|b| b["type"] == "tool_use") {
@@ -204,6 +231,21 @@ fn read_stream(app: AppHandle, id: u64, stdout: std::process::ChildStdout, stder
                     }
                     let name = b["name"].as_str().unwrap_or("ferramenta").to_string();
                     emit(&app, ClaudeEvent::Tool { id, detail: tool_detail(&b["input"]), name });
+                }
+            }
+            Some("rate_limit_event") => {
+                // Janelas do plano (5 horas e semana), com quanto já foi usado.
+                let info = &v["rate_limit_info"];
+                let mut windows = Vec::new();
+                if let Some(map) = info["unifiedWindows"].as_object() {
+                    for (kind, w) in map {
+                        if let Some(used) = w["utilization"].as_f64() {
+                            windows.push(LimitWindow { kind: kind.clone(), used, resets_at: w["resetsAt"].as_u64() });
+                        }
+                    }
+                }
+                if !windows.is_empty() {
+                    emit(&app, ClaudeEvent::Limits { id, windows });
                 }
             }
             Some("result") => {
@@ -237,7 +279,7 @@ fn read_stream(app: AppHandle, id: u64, stdout: std::process::ChildStdout, stder
 }
 
 /// Resumo curto do que a ferramenta recebeu: arquivo, padrão de busca, endereço...
-fn tool_detail(input: &Value) -> String {
+pub(crate) fn tool_detail(input: &Value) -> String {
     for key in ["file_path", "path", "pattern", "query", "url"] {
         if let Some(s) = input[key].as_str() {
             let s = s.replace('\\', "/");
