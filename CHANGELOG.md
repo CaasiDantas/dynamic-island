@@ -2,6 +2,13 @@
 
 Todas as mudanças relevantes de cada versão. O app instalado mostra estas notas ao oferecer a atualização.
 
+## 0.6.0
+
+**Novidades**
+- **Sequências de tarefas:** ligue uma tarefa a outra ("Depois de: Criar automação") para formar etapas de uma mesma coisa. Cada cartão mostra a posição (1/2, 2/2) e um cadeado enquanto a etapa anterior não foi feita.
+- Ao concluir uma etapa, a ilha mostra qual é a próxima. Se fizer uma fora de ordem, ela avisa, mas não bloqueia.
+- Na lista do dia, as etapas de uma sequência ficam juntas e em ordem.
+
 ## 0.5.0
 
 **Novidades**

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useCommitCount } from "../../perf/hooks";
-import { IconBell, IconCalendar, IconCheck, IconChevronLeft, IconChevronRight, IconClose, IconFolder, IconPlus, IconReset } from "../../island/icons";
-import { Board, Folders } from "./Board";
+import { IconBell, IconCalendar, IconCheck, IconChevronLeft, IconChevronRight, IconClose, IconFolder, IconLink, IconPlus, IconReset } from "../../island/icons";
+import { Board, ChainBadge, Folders } from "./Board";
 import { focusIsland } from "../claude/store";
 import {
   dayLabel,
   historyGroups,
   hhmm,
+  linkOptions,
   reminderLabel,
   startOfDay,
   tasksByDay,
@@ -89,6 +90,7 @@ function Card({ task, flash }: { task: Task; flash: boolean }) {
       <button className="tdc-text" onClick={() => todo.open({ kind: "edit", id: task.id })} title="Editar">
         {task.text}
       </button>
+      <ChainBadge task={task} />
       {task.remindAt != null && !task.done && (
         <span className="tdc-when" data-overdue={overdue || undefined}>
           <IconBell />
@@ -159,6 +161,9 @@ const dateValue = (day: number) => {
 function Form({ task, day, onDone }: { task?: Task; day?: number; onDone: () => void }) {
   const [text, setText] = useState(task?.text ?? "");
   const [remind, setRemind] = useState<Remind>(() => fromTask(task, day));
+  const [after, setAfter] = useState<string | null>(task?.after ?? null);
+  const tasks = useTasks();
+  const options = linkOptions(tasks, task, task?.folderId ?? null);
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -183,8 +188,8 @@ function Form({ task, day, onDone }: { task?: Task; day?: number; onDone: () => 
 
   const save = () => {
     if (!text.trim() || past) return;
-    if (task) todo.update(task.id, text, at);
-    else todo.add(text, at);
+    if (task) todo.update(task.id, text, at, after);
+    else todo.add(text, at, after);
     onDone();
   };
 
@@ -202,6 +207,19 @@ function Form({ task, day, onDone }: { task?: Task; day?: number; onDone: () => 
           <IconChevronLeft />
         </button>
         <h1>{task ? "Editar tarefa" : "Nova tarefa"}</h1>
+        {options.length > 0 && (
+          <label className="td-after" data-on={after ? "" : undefined} title="Etapa anterior: a ilha avisa se esta for feita antes dela">
+            <IconLink />
+            <select value={after ?? ""} onFocus={focusIsland} onChange={(e) => setAfter(e.target.value || null)} aria-label="Depois de qual tarefa">
+              <option value="">Ligar a outra tarefa</option>
+              {options.map((o) => (
+                <option key={o.id} value={o.id}>
+                  Depois de: {o.text}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </header>
 
       <div className="composer composer--line td-input">

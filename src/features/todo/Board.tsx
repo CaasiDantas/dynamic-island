@@ -1,8 +1,21 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
-import { IconBell, IconCheck, IconChevronLeft, IconClose, IconFolder, IconPlus, IconTrash } from "../../island/icons";
+import { IconBell, IconCheck, IconChevronLeft, IconClose, IconFolder, IconLink, IconLock, IconPlus, IconTrash } from "../../island/icons";
 import { toast } from "../../island/toast";
 import { focusIsland } from "../claude/store";
-import { FOLDER_MAX_COLUMNS, columnTasks, hhmm, reminderLabel, startOfDay, todo, useFolders, useTasks, type Folder, type Task } from "./store";
+import {
+  FOLDER_MAX_COLUMNS,
+  blockerOf,
+  chainOf,
+  columnTasks,
+  hhmm,
+  reminderLabel,
+  startOfDay,
+  todo,
+  useFolders,
+  useTasks,
+  type Folder,
+  type Task,
+} from "./store";
 
 /* ═════════ Pastas: lista + criar ═════════ */
 
@@ -269,6 +282,26 @@ function BoardCardSlot({ showGap, children }: { showGap: boolean; children: Reac
   );
 }
 
+/** Posição na sequência ("1/2"); cadeado enquanto a etapa anterior não foi feita. */
+export function ChainBadge({ task }: { task: Task }) {
+  const tasks = useTasks();
+  if (!task.after && !tasks.some((t) => t.after === task.id)) return null;
+  const chain = chainOf(tasks, task);
+  if (chain.length < 2) return null;
+  const pos = chain.findIndex((t) => t.id === task.id) + 1;
+  const prev = task.done ? undefined : blockerOf(tasks, task);
+  return (
+    <span
+      className="tdc-link"
+      data-locked={prev ? "" : undefined}
+      title={prev ? `Depois de: ${prev.text}` : chain.map((t) => t.text).join(" → ")}
+    >
+      {prev ? <IconLock /> : <IconLink />}
+      {pos}/{chain.length}
+    </span>
+  );
+}
+
 function BoardCard({ task, onPointerDown }: { task: Task; onPointerDown?: (e: RPointerEvent<HTMLElement>) => void }) {
   const overdue = !task.done && task.remindAt != null && task.remindAt <= Date.now();
   return (
@@ -277,6 +310,7 @@ function BoardCard({ task, onPointerDown }: { task: Task; onPointerDown?: (e: RP
         <IconCheck />
       </button>
       <span className="bd-card-text">{task.text}</span>
+      <ChainBadge task={task} />
       {task.remindAt != null && !task.done && (
         <span className="tdc-when" data-overdue={overdue || undefined}>
           <IconBell />

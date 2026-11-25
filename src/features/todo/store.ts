@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { showPill } from "../pills/store";
+import { toast } from "../../island/toast";
 
 /**
  * Tarefas com lembrete opcional. Tudo fica no próprio PC (localStorage).
@@ -26,6 +27,8 @@ export interface Task {
   columnId?: string | null;
   /** Posição dentro da coluna. */
   order?: number;
+  /** Tarefa que vem antes desta na sequência (mesma pasta ou lista do dia). */
+  after?: string | null;
 }
 
 export interface Column {
@@ -128,10 +131,10 @@ export function columnTasks(tasks: Task[], folder: Folder, columnId: string) {
 }
 
 export const todo = {
-  add(text: string, remindAt: number | null) {
+  add(text: string, remindAt: number | null, after: string | null = null) {
     const t = text.trim();
     if (!t) return;
-    const task: Task = { id: crypto.randomUUID(), text: t, done: false, createdAt: Date.now(), doneAt: null, remindAt, notified: false };
+    const task: Task = { id: crypto.randomUUID(), text: t, done: false, createdAt: Date.now(), doneAt: null, remindAt, notified: false, after };
     patchTasks((tasks) => [...tasks, task]);
   },
   /** Nova tarefa direto numa coluna do quadro (vai para o fim dela). */
@@ -165,6 +168,8 @@ export const todo = {
     const ordered = [...others.slice(0, at), task, ...others.slice(at)];
     const orderOf = new Map(ordered.map((t, i) => [t.id, i]));
     const done = isDoneColumn(folder, columnId);
+    // Sair da primeira coluna (começar) ou concluir fora de ordem: avisa, mas deixa.
+    const advances = columnId !== folder.columns[0].id && (task.columnId ?? folder.columns[0].id) !== columnId;
     patchTasks((tasks) =>
       tasks.map((t) => {
         if (t.id === id) {
@@ -173,12 +178,15 @@ export const todo = {
         return orderOf.has(t.id) ? { ...t, order: orderOf.get(t.id)! } : t;
       }),
     );
+    if (advances) announce(task, done && !task.done);
   },
-  update(id: string, text: string, remindAt: number | null) {
+  update(id: string, text: string, remindAt: number | null, after: string | null = null) {
     const t = text.trim();
     if (!t) return;
+    // Nunca fecha um ciclo (A depois de B depois de A).
+    const link = after && after !== id && !dependsOn(state.tasks, after, id) ? after : null;
     patchTasks((tasks) =>
-      tasks.map((x) => (x.id === id ? { ...x, text: t, remindAt, notified: remindAt === x.remindAt ? x.notified : false } : x)),
+      tasks.map((x) => (x.id === id ? { ...x, text: t, remindAt, notified: remindAt === x.remindAt ? x.notified : false, after: link } : x)),
     );
   },
   toggle(id: string) {
@@ -190,9 +198,12 @@ export const todo = {
       return;
     }
     patchTasks((tasks) => tasks.map((t) => (t.id === id ? { ...t, done: !t.done, doneAt: t.done ? null : Date.now() } : t)));
+    if (task && !task.done) announce(task, true);
   },
+  /** Apaga; quem vinha depois dela passa a vir depois da anterior (a sequência não quebra). */
   remove(id: string) {
-    patchTasks((tasks) => tasks.filter((t) => t.id !== id));
+    const gone = state.tasks.find((t) => t.id === id);
+    patchTasks((tasks) => tasks.filter((t) => t.id !== id).map((t) => (t.after === id ? { ...t, after: gone?.after ?? null } : t)));
   },
   clearHistory() {
     patchTasks((tasks) => tasks.filter((t) => !t.done || !!t.folderId));
@@ -274,6 +285,74 @@ export const todo = {
   },
 };
 
+/* ───────── Sequências ───────── */
+
+const short = (s: string) => (s.length > 42 ? `${s.slice(0, 40)}…` : s);
+
+/** A tarefa anterior da sequência, se ainda não foi feita. */
+export function blockerOf(tasks: Task[], t: Task) {
+  const prev = t.after ? tasks.find((x) => x.id === t.after) : undefined;
+  return prev && !prev.done ? prev : undefined;
+}
+
+/** `id` vem (direta ou indiretamente) depois de `before`? */
+function dependsOn(tasks: Task[], id: string, before: string) {
+  const seen = new Set<string>();
+  let cur = tasks.find((t) => t.id === id);
+  while (cur?.after && !seen.has(cur.id)) {
+    if (cur.after === before) return true;
+    seen.add(cur.id);
+    cur = tasks.find((t) => t.id === cur!.after);
+  }
+  return false;
+}
+
+/** A sequência inteira de uma tarefa, na ordem: as anteriores, ela e as seguintes. */
+export function chainOf(tasks: Task[], t: Task) {
+  const seen = new Set([t.id]);
+  const up: Task[] = [];
+  let cur = t;
+  for (;;) {
+    const prev = cur.after ? tasks.find((x) => x.id === cur.after) : undefined;
+    if (!prev || seen.has(prev.id)) break;
+    seen.add(prev.id);
+    up.unshift(prev);
+    cur = prev;
+  }
+  const chain = [...up, t];
+  for (;;) {
+    const last = chain[chain.length - 1];
+    const next = tasks.filter((x) => x.after === last.id && !seen.has(x.id)).sort((a, b) => a.createdAt - b.createdAt)[0];
+    if (!next) break;
+    seen.add(next.id);
+    chain.push(next);
+  }
+  return chain;
+}
+
+/** Tarefas que podem vir antes de `t`: mesmo lugar (pasta ou lista do dia) e sem formar ciclo. */
+export function linkOptions(tasks: Task[], t: Task | undefined, folderId: string | null) {
+  return tasks.filter(
+    (x) =>
+      x.id !== t?.id &&
+      (x.folderId ?? null) === folderId &&
+      (folderId != null || !x.done || x.id === t?.after) &&
+      !(t && dependsOn(tasks, x.id, t.id)),
+  );
+}
+
+/** Depois de começar ou concluir: avisa se pulou uma etapa, ou mostra a próxima. */
+function announce(task: Task, finished: boolean) {
+  const prev = blockerOf(state.tasks, task);
+  if (prev) {
+    toast(`Antes desta vinha "${short(prev.text)}"`);
+    return;
+  }
+  if (!finished) return;
+  const next = state.tasks.find((t) => t.after === task.id && !t.done);
+  if (next) toast(`Próxima: ${short(next.text)}`);
+}
+
 /* ───────── Lembretes ───────── */
 
 function schedule() {
@@ -341,7 +420,25 @@ export function todayList(all: Task[]) {
     .filter((t) => !t.done)
     .sort((a, b) => (a.remindAt ?? Infinity) - (b.remindAt ?? Infinity) || a.createdAt - b.createdAt);
   const doneToday = tasks.filter((t) => t.done && (t.doneAt ?? 0) >= today).sort((a, b) => (a.doneAt ?? 0) - (b.doneAt ?? 0));
-  return { pending, doneToday, list: [...pending, ...doneToday] };
+  const ordered = keepChainsTogether(tasks, pending);
+  return { pending: ordered, doneToday, list: [...ordered, ...doneToday] };
+}
+
+/** Etapas de uma sequência ficam juntas e em ordem, onde a primeira delas aparece. */
+function keepChainsTogether(all: Task[], list: Task[]) {
+  const inList = new Set(list.map((t) => t.id));
+  const placed = new Set<string>();
+  const out: Task[] = [];
+  for (const t of list) {
+    if (placed.has(t.id)) continue;
+    const group = t.after || all.some((x) => x.after === t.id) ? chainOf(all, t).filter((x) => inList.has(x.id)) : [t];
+    for (const x of group) {
+      if (placed.has(x.id)) continue;
+      placed.add(x.id);
+      out.push(x);
+    }
+  }
+  return out;
 }
 
 /** Histórico: concluídas, agrupadas por dia (mais recente primeiro). */

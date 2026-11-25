@@ -953,3 +953,71 @@ html[data-motion="reduced"] .tdc[data-flash] {
 .td-input .td-primary--sm {
   align-self: center;
 }
+
+/* ── Sequências: "1/2" no cartão e "Depois de" no formulário ── */
+
+.tdc-link {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  height: 1.125rem;
+  padding: 0 0.375rem;
+  border-radius: 0.5625rem;
+  font-size: 0.65625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+
+.tdc-link[data-locked] {
+  color: var(--fg-3);
+  background: rgb(var(--ink) / 0.07);
+}
+
+.bd-card .tdc-link {
+  margin-top: 0.0625rem;
+}
+
+.td-after {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  max-width: 15rem;
+  height: 1.75rem;
+  padding: 0 0.625rem;
+  border-radius: 0.875rem;
+  font-size: 0.71875rem;
+  color: var(--fg-2);
+  background: rgb(var(--ink) / 0.07);
+  border: 1px solid var(--line);
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.td-after:hover {
+  color: var(--fg);
+}
+
+.td-after[data-on] {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  border-color: transparent;
+}
+
+.td-after svg {
+  flex: none;
+}
+
+.td-after select {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  color-scheme: dark;
+}

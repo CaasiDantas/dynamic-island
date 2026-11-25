@@ -504,3 +504,17 @@ export const IconDownload = (p: IconProps) => (
     <path d="M5 19.5h14" />
   </svg>
 );
+
+export const IconLink = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+  </svg>
+);
+
+export const IconLock = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <rect x="5.5" y="10.5" width="13" height="9" rx="2.2" />
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+  </svg>
+);
